@@ -1,0 +1,15 @@
+- hosts: all
+  sudo: True
+
+  tasks:
+  - apt: update-cache=yes upgrade=yes
+  - apt: name=rabbitmq-server state=latest
+  - apt: name=python-pillow state=latest
+  - service: name=rabbitmq-server state=started enabled=yes
+  - rabbitmq_user: user=tutorial
+                   password=secretsecret
+                   vhost=/
+                   configure_priv=.*
+                   read_priv=.*
+                   write_priv=.*
+                   state=present

@@ -1,0 +1,11 @@
+digraph { 
+  node [shape=box]; Producer; Database;
+  Producer -> Database [color=orange];
+  Producer -> "Queue Service" [color=orange];
+  Tracker -> Database [color=green];
+  "Queue Service" -> Tracker [color=green];
+  "Queue Service" -> Worker [color=orange];
+  Worker -> "Image File" [color=blue];
+  Worker -> "Queue Service" [color=green];
+  "Image File" -> "Storage Backend" [color=blue];
+}
