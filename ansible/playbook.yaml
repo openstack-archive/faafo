@@ -17,3 +17,18 @@
                    state=present
   - rabbitmq_plugin: names=rabbitmq_management state=enabled
   - apt: name=python-kombu state=latest
+  - apt: name=mysql-server state=present
+  - apt: name=mysql-client state=present
+  - apt: name=python-mysqldb state=present
+  - apt: name=python-sqlalchemy state=present
+  - apt: name=expect state=present
+  - copy: src=files/my.cnf dest=/etc/my.cnf
+  - service: name=mysql state=restarted enabled=yes
+  - copy: src=files/mysql_secure_installation.sh
+          dest=/root/mysql_secure_installation.sh
+          mode=0755
+  - command: /root/mysql_secure_installation.sh
+             creates=/root/mysql_secure_installation.done
+  - copy: src=files/client.my.cnf dest=/root/.my.cnf
+  - mysql_db: name=tutorial state=present
+  - mysql_user: name=tutorial password=secretsecret priv=tutorial.*:ALL state=present

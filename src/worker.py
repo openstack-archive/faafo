@@ -15,6 +15,7 @@
 # based on http://code.activestate.com/recipes/577120-julia-fractals/
 
 import argparse
+import hashlib
 import logging
 import os
 from PIL import Image
@@ -24,6 +25,7 @@ import time
 
 from kombu.mixins import ConsumerMixin
 import kombu
+from kombu.pools import producers
 
 import queues
 
@@ -87,16 +89,30 @@ class Worker(ConsumerMixin):
                          callbacks=[self.process_task])]
 
     def process_task(self, body, message):
-        logging.info("processing task %s" % body['id'])
+        logging.info("processing task %s" % body['uuid'])
         start_time = time.time()
         juliaset = JuliaSet(body['width'], body['height'], body['xa'],
                             body['xb'], body['ya'], body['yb'],
                             body['iterations'])
-        logging.info(os.path.join(self.target, "%s.png" % body['id']))
-        juliaset.save(os.path.join(self.target, "%s.png" % body['id']))
+        filename = os.path.join(self.target, "%s.png" % body['uuid'])
         elapsed_time = time.time() - start_time
         logging.info("task %s processed in %f seconds" %
-                     (body['id'], elapsed_time))
+                     (body['uuid'], elapsed_time))
+        juliaset.save(filename)
+        logging.info("saved result of task %s to file %s" % (body['uuid'], filename))
+        checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
+        result = {
+            'uuid': body['uuid'],
+            'duration': elapsed_time,
+            'checksum': checksum
+        }
+        logging.info("pushed result: %s" % result)
+        with producers[self.connection].acquire(block=True) as producer:
+            producer.publish(result, serializer='pickle',
+                             exchange=queues.result_exchange,
+                             declare=[queues.result_exchange],
+                             routing_key='results')
+
         message.ack()
 
 
@@ -109,7 +125,7 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", type=str, help="Target directory",
                         default="/home/vagrant")
-    parser.add_argument("--url", type=str, help="AMQP connection URL",
+    parser.add_argument("--amqp-url", type=str, help="AMQP connection URL",
                         default="amqp://tutorial:secretsecret@localhost:5672//")
     return parser.parse_args()
 
@@ -118,7 +134,7 @@ def main():
     initialize_logging()
     args = parse_command_line_arguments()
     try:
-        worker = Worker(args.url, args.target)
+        worker = Worker(args.amqp_url, args.target)
         worker.run()
     except KeyboardInterrupt:
         return 0
