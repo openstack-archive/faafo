@@ -15,10 +15,17 @@
 # based on http://code.activestate.com/recipes/577120-julia-fractals/
 
 import argparse
+import logging
+import os
 from PIL import Image
 import random
 import sys
+import time
 
+from kombu.mixins import ConsumerMixin
+import kombu
+
+import queues
 
 class JuliaSet:
 
@@ -68,34 +75,55 @@ class JuliaSet:
         return (c, z)
 
 
+class Worker(ConsumerMixin):
+
+    def __init__(self, url, target):
+        self.connection = kombu.Connection(url)
+        self.target = target
+
+    def get_consumers(self, Consumer, channel):
+        return [Consumer(queues=queues.task_queues,
+                         accept=['pickle', 'json'],
+                         callbacks=[self.process_task])]
+
+    def process_task(self, body, message):
+        logging.info("processing task %s" % body['id'])
+        start_time = time.time()
+        juliaset = JuliaSet(body['width'], body['height'], body['xa'],
+                            body['xb'], body['ya'], body['yb'],
+                            body['iterations'])
+        logging.info(os.path.join(self.target, "%s.png" % body['id']))
+        juliaset.save(os.path.join(self.target, "%s.png" % body['id']))
+        elapsed_time = time.time() - start_time
+        logging.info("task %s processed in %f seconds" %
+                     (body['id'], elapsed_time))
+        message.ack()
+
+
+def initialize_logging():
+    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+
+
 def parse_command_line_arguments():
     """Parse the command line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--filename", type=str, default="output.png",
-                        help="Output filename.")
-    parser.add_argument("--height", type=int, default=512,
-                        help="The height of the generate image.")
-    parser.add_argument("--width", type=int, default=512,
-                        help="The width of the generated image.")
-    parser.add_argument("--xa", type=float, default=-2.0,
-                        help="Value for the parameter 'xa'.")
-    parser.add_argument("--xb", type=float, default=2.0,
-                        help="Value for the parameter 'xb'.")
-    parser.add_argument("--ya", type=float, default=-1.5,
-                        help="Value for the parameter 'ya'.")
-    parser.add_argument("--yb", type=float, default=1.5,
-                        help="Value for the parameter 'yb'.")
-    parser.add_argument("--iterations", type=int, default=255,
-                        help="The maximum number of iterations.")
+    parser.add_argument("--target", type=str, help="Target directory",
+                        default="/home/vagrant")
+    parser.add_argument("--url", type=str, help="AMQP connection URL",
+                        default="amqp://tutorial:secretsecret@localhost:5672//")
     return parser.parse_args()
 
 
 def main():
+    initialize_logging()
     args = parse_command_line_arguments()
-    juliaset = JuliaSet(args.width, args.height, args.xa, args.xb,
-                        args.ya, args.yb, args.iterations)
-    juliaset.save(args.filename)
-    return 0
+    try:
+        worker = Worker(args.url, args.target)
+        worker.run()
+    except KeyboardInterrupt:
+        return 0
+
+    return 1
 
 if __name__ == '__main__':
     sys.exit(main())
