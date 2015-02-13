@@ -10,7 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from kombu import Exchange, Queue
+from kombu import Exchange
+from kombu import Queue
 
 task_exchange = Exchange('tasks', type='direct')
 task_queues = [Queue('tasks', task_exchange, routing_key='tasks')]

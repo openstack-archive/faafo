@@ -15,6 +15,7 @@ from sqlalchemy import Column, Integer, String, Float
 
 Base = declarative_base()
 
+
 class Fractal(Base):
     __tablename__ = 'fractals'
 

@@ -35,10 +35,12 @@ def initialize_logging():
 def parse_command_line_arguments():
     """Parse the command line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--amqp-url", type=str, help="AMQP connection URL",
-                        default="amqp://tutorial:secretsecret@localhost:5672//")
-    parser.add_argument("--database-url", type=str, help="database connection URL",
-                        default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
+    parser.add_argument(
+        "--amqp-url", type=str, help="AMQP connection URL",
+        default="amqp://tutorial:secretsecret@localhost:5672//")
+    parser.add_argument(
+        "--database-url", type=str, help="database connection URL",
+        default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
     parser.add_argument("--max-height", type=int, default=1024,
                         help="The maximum height of the generate image.")
     parser.add_argument("--max-width", type=int, default=1024,
@@ -100,6 +102,7 @@ def generate_task(args):
         'yb': yb
     }
 
+
 def main():
     initialize_logging()
     args = parse_command_line_arguments()
@@ -118,20 +121,27 @@ def main():
             random.seed()
             number = random.randint(args.min_tasks, args.max_tasks)
             logging.info("generating %d task(s)" % number)
-            for i in xrange(0,number):
+            for i in xrange(0, number):
                 task = generate_task(args)
-                fractal = models.Fractal(uuid=task['uuid'], width=task['width'],
-                                         height=task['height'], xa=task['xa'],
-                                         xb=task['xb'], ya=task['ya'], yb=task['yb'],
-                                         iterations=task['iterations'])
+                fractal = models.Fractal(
+                    uuid=task['uuid'],
+                    width=task['width'],
+                    height=task['height'],
+                    xa=task['xa'],
+                    xb=task['xb'],
+                    ya=task['ya'],
+                    yb=task['yb'],
+                    iterations=task['iterations'])
                 session.add(fractal)
                 session.commit()
                 logging.info("generated task: %s" % task)
                 with producers[connection].acquire(block=True) as producer:
-                    producer.publish(task, serializer='pickle',
-                                     exchange=queues.task_exchange,
-                                     declare=[queues.task_exchange],
-                                     routing_key='tasks')
+                    producer.publish(
+                        task,
+                        serializer='pickle',
+                        exchange=queues.task_exchange,
+                        declare=[queues.task_exchange],
+                        routing_key='tasks')
 
             pause = random.uniform(args.min_pause, args.max_pause)
             logging.info("sleeping for %f seconds" % pause)

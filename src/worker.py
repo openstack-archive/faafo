@@ -23,13 +23,14 @@ import random
 import sys
 import time
 
-from kombu.mixins import ConsumerMixin
 import kombu
+from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 
 import queues
 
-class JuliaSet:
+
+class JuliaSet(object):
 
     def __init__(self, width, height, xa=-2.0, xb=2.0, ya=-1.5, yb=1.5,
                  iterations=255):
@@ -99,7 +100,8 @@ class Worker(ConsumerMixin):
         logging.info("task %s processed in %f seconds" %
                      (body['uuid'], elapsed_time))
         juliaset.save(filename)
-        logging.info("saved result of task %s to file %s" % (body['uuid'], filename))
+        logging.info("saved result of task %s to file %s" %
+                     (body['uuid'], filename))
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
         result = {
             'uuid': body['uuid'],
@@ -123,10 +125,12 @@ def initialize_logging():
 def parse_command_line_arguments():
     """Parse the command line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--target", type=str, help="Target directory",
-                        default="/home/vagrant")
-    parser.add_argument("--amqp-url", type=str, help="AMQP connection URL",
-                        default="amqp://tutorial:secretsecret@localhost:5672//")
+    parser.add_argument(
+        "--target", type=str, help="Target directory",
+        default="/home/vagrant")
+    parser.add_argument(
+        "--amqp-url", type=str, help="AMQP connection URL",
+        default="amqp://tutorial:secretsecret@localhost:5672//")
     return parser.parse_args()
 
 

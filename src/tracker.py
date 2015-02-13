@@ -16,11 +16,10 @@
 
 import argparse
 import logging
-import os
 import sys
 
-from kombu.mixins import ConsumerMixin
 import kombu
+from kombu.mixins import ConsumerMixin
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -38,7 +37,6 @@ class Tracker(ConsumerMixin):
         maker = sessionmaker(bind=engine)
         self.session = maker()
 
-
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=queues.result_queues,
                          accept=['pickle', 'json'],
@@ -49,11 +47,12 @@ class Tracker(ConsumerMixin):
         logging.info("elapsed time %f seconds" % body['duration'])
         logging.info("checksum %s" % body['checksum'])
         try:
-            fractal = self.session.query(models.Fractal).filter(models.Fractal.uuid == str(body['uuid'])).one()
+            fractal = self.session.query(models.Fractal).filter(
+                models.Fractal.uuid == str(body['uuid'])).one()
             fractal.duration = body['duration']
             fractal.checksum = body['checksum']
             self.session.commit()
-        except:
+        except Exception:
             pass
         message.ack()
 
@@ -65,10 +64,12 @@ def initialize_logging():
 def parse_command_line_arguments():
     """Parse the command line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--amqp-url", type=str, help="AMQP connection URL",
-                        default="amqp://tutorial:secretsecret@localhost:5672//")
-    parser.add_argument("--database-url", type=str, help="database connection URL",
-                        default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
+    parser.add_argument(
+        "--amqp-url", type=str, help="AMQP connection URL",
+        default="amqp://tutorial:secretsecret@localhost:5672//")
+    parser.add_argument(
+        "--database-url", type=str, help="database connection URL",
+        default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
     return parser.parse_args()
 
 
