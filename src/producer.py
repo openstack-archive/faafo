@@ -77,6 +77,8 @@ def parse_command_line_arguments():
                         help="The minimum number of generated tasks.")
     parser.add_argument("--max-tasks", type=int, default=10,
                         help="The maximum number of generated tasks.")
+    parser.add_argument("--one-shot", action='store_true',
+                        help="Generate one set of tasks and exit.")
     return parser.parse_args()
 
 
@@ -142,6 +144,9 @@ def main():
                         exchange=queues.task_exchange,
                         declare=[queues.task_exchange],
                         routing_key='tasks')
+
+            if args.one_shot:
+                break
 
             pause = random.uniform(args.min_pause, args.max_pause)
             logging.info("sleeping for %f seconds" % pause)
