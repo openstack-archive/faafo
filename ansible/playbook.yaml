@@ -10,6 +10,7 @@
       - ibmysqlclient-dev
       - mysql-client
       - mysql-server
+      - python-daemon
       - python-dev
       - python-kombu
       - python-mysqldb

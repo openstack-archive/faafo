@@ -19,6 +19,7 @@ import sys
 import time
 import uuid
 
+import daemon
 import kombu
 from kombu.pools import producers
 from sqlalchemy import create_engine
@@ -28,8 +29,9 @@ from openstack_application_tutorial import models
 from openstack_application_tutorial import queues
 
 
-def initialize_logging():
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+def initialize_logging(filename):
+    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO,
+                        filename=filename)
 
 
 def parse_command_line_arguments():
@@ -41,6 +43,12 @@ def parse_command_line_arguments():
     parser.add_argument(
         "--database-url", type=str, help="database connection URL",
         default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
+    parser.add_argument(
+        "--log-file", type=str, help="write logs to this file", default=None)
+    parser.add_argument(
+        "--daemonize", action="store_true", help="run in background")
+    parser.add_argument("--one-shot", action='store_true',
+                        help="Generate one set of tasks and exit.")
     parser.add_argument("--max-height", type=int, default=1024,
                         help="The maximum height of the generate image.")
     parser.add_argument("--max-width", type=int, default=1024,
@@ -77,8 +85,6 @@ def parse_command_line_arguments():
                         help="The minimum number of generated tasks.")
     parser.add_argument("--max-tasks", type=int, default=10,
                         help="The maximum number of generated tasks.")
-    parser.add_argument("--one-shot", action='store_true',
-                        help="Generate one set of tasks and exit.")
     return parser.parse_args()
 
 
@@ -105,9 +111,44 @@ def generate_task(args):
     }
 
 
+def run(args, connection, session):
+    while True:
+        random.seed()
+        number = random.randint(args.min_tasks, args.max_tasks)
+        logging.info("generating %d task(s)" % number)
+        for i in xrange(0, number):
+            task = generate_task(args)
+            fractal = models.Fractal(
+                uuid=task['uuid'],
+                width=task['width'],
+                height=task['height'],
+                xa=task['xa'],
+                xb=task['xb'],
+                ya=task['ya'],
+                yb=task['yb'],
+                iterations=task['iterations'])
+            session.add(fractal)
+            session.commit()
+            logging.info("generated task: %s" % task)
+            with producers[connection].acquire(block=True) as producer:
+                producer.publish(
+                    task,
+                    serializer='pickle',
+                    exchange=queues.task_exchange,
+                    declare=[queues.task_exchange],
+                    routing_key='tasks')
+
+        if args.one_shot:
+            break
+
+        pause = random.uniform(args.min_pause, args.max_pause)
+        logging.info("sleeping for %f seconds" % pause)
+        time.sleep(pause)
+
+
 def main():
-    initialize_logging()
     args = parse_command_line_arguments()
+    initialize_logging(args.log_file)
 
     connection = kombu.Connection(args.amqp_url)
     engine = create_engine(args.database_url)
@@ -118,42 +159,14 @@ def main():
     maker = sessionmaker(bind=engine)
     session = maker()
 
-    try:
-        while True:
-            random.seed()
-            number = random.randint(args.min_tasks, args.max_tasks)
-            logging.info("generating %d task(s)" % number)
-            for i in xrange(0, number):
-                task = generate_task(args)
-                fractal = models.Fractal(
-                    uuid=task['uuid'],
-                    width=task['width'],
-                    height=task['height'],
-                    xa=task['xa'],
-                    xb=task['xb'],
-                    ya=task['ya'],
-                    yb=task['yb'],
-                    iterations=task['iterations'])
-                session.add(fractal)
-                session.commit()
-                logging.info("generated task: %s" % task)
-                with producers[connection].acquire(block=True) as producer:
-                    producer.publish(
-                        task,
-                        serializer='pickle',
-                        exchange=queues.task_exchange,
-                        declare=[queues.task_exchange],
-                        routing_key='tasks')
-
-            if args.one_shot:
-                break
-
-            pause = random.uniform(args.min_pause, args.max_pause)
-            logging.info("sleeping for %f seconds" % pause)
-            time.sleep(pause)
-
-    except KeyboardInterrupt:
-        pass
+    if args.daemonize:
+        with daemon.DaemonContext():
+            run(args, connection, session)
+    else:
+        try:
+            run(args, connection, session)
+        except KeyboardInterrupt:
+            return 0
 
     return 0
 

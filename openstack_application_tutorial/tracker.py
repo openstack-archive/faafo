@@ -18,6 +18,7 @@ import argparse
 import logging
 import sys
 
+import daemon
 import kombu
 from kombu.mixins import ConsumerMixin
 from sqlalchemy import create_engine
@@ -57,8 +58,9 @@ class Tracker(ConsumerMixin):
         message.ack()
 
 
-def initialize_logging():
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+def initialize_logging(filename):
+    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO,
+                        filename=filename)
 
 
 def parse_command_line_arguments():
@@ -70,19 +72,28 @@ def parse_command_line_arguments():
     parser.add_argument(
         "--database-url", type=str, help="database connection URL",
         default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
+    parser.add_argument(
+        "--log-file", type=str, help="write logs to this file", default=None)
+    parser.add_argument(
+        "--daemonize", action="store_true", help="run in background")
     return parser.parse_args()
 
 
 def main():
-    initialize_logging()
     args = parse_command_line_arguments()
-    try:
-        tracker = Tracker(args.amqp_url, args.database_url)
-        tracker.run()
-    except KeyboardInterrupt:
-        return 0
+    initialize_logging(args.log_file)
+    tracker = Tracker(args.amqp_url, args.database_url)
 
-    return 1
+    if args.daemonize:
+        with daemon.DaemonContext():
+            tracker.run()
+    else:
+        try:
+            tracker.run()
+        except KeyboardInterrupt:
+            return 0
+
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

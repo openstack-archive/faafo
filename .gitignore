@@ -7,3 +7,4 @@
 .eggs
 .*.swp
 build
+*.log
