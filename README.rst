@@ -39,15 +39,15 @@ The installation of Vagrant is described at https://docs.vagrantup.com/v2/instal
 
     $ vagrant up
 
-Login with :code:`vagrant ssh`, change into the directory :code:`/home/vagrant/src` and
+Login with :code:`vagrant ssh`, change into the directory :code:`/vagrant` and
 open a new screen or tmux session. Aftwards run the worker, producer, and 
 tracker services in the foreground, each service in a separate window.
 
 .. code::
 
-    $ python worker.py
-    $ python tracker.py
-    $ python producer.py
+    $ python openstack_application_tutorial/worker.py
+    $ python openstack_application_tutorial/tracker.py
+    $ python openstack_application_tutorial/producer.py
 
 RabbitMQ server
 ~~~~~~~~~~~~~~~

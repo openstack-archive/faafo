@@ -3,8 +3,20 @@
 
   tasks:
   - apt: update-cache=yes upgrade=yes
-  - apt: name=rabbitmq-server state=latest
-  - apt: name=python-pillow state=latest
+  - apt: name={{ item }} state=latest
+    with_items:
+      - expect
+      - git
+      - ibmysqlclient-dev
+      - mysql-client
+      - mysql-server
+      - python-dev
+      - python-kombu
+      - python-mysqldb
+      - python-pillow
+      - python-sqlalchemy
+      - python-virtualenv
+      - rabbitmq-server
   - service: name=rabbitmq-server state=started enabled=yes
   - rabbitmq_user: user=guest
                    password=secretsecret
@@ -16,12 +28,6 @@
                    write_priv=.*
                    state=present
   - rabbitmq_plugin: names=rabbitmq_management state=enabled
-  - apt: name=python-kombu state=latest
-  - apt: name=mysql-server state=present
-  - apt: name=mysql-client state=present
-  - apt: name=python-mysqldb state=present
-  - apt: name=python-sqlalchemy state=present
-  - apt: name=expect state=present
   - copy: src=files/my.cnf dest=/etc/my.cnf
   - service: name=mysql state=restarted enabled=yes
   - copy: src=files/mysql_secure_installation.sh

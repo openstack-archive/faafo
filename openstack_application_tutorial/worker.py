@@ -27,7 +27,7 @@ import kombu
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 
-import queues
+from openstack_application_tutorial import queues
 
 
 class JuliaSet(object):

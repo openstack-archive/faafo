@@ -1,3 +1,9 @@
 .tox
 .vagrant
 *.pyc
+.venv
+*.egg-info
+*.egg
+.eggs
+.*.swp
+build

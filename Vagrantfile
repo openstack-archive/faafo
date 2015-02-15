@@ -17,8 +17,6 @@ BOX = "ubuntu/trusty64"
 
 Vagrant.configure(2) do |config|
   config.vm.box = BOX
-  config.vm.synced_folder '.', '/vagrant', disabled: true
-  config.vm.synced_folder 'src', '/home/vagrant/src'
   config.vm.network "forwarded_port", guest: 15672, host: 15672
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--memory", "2048"]

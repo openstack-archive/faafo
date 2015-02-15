@@ -23,8 +23,8 @@ from kombu.mixins import ConsumerMixin
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-import models
-import queues
+from openstack_application_tutorial import models
+from openstack_application_tutorial import queues
 
 
 class Tracker(ConsumerMixin):
