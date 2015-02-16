@@ -39,15 +39,7 @@ The installation of Vagrant is described at https://docs.vagrantup.com/v2/instal
 
     $ vagrant up
 
-Login with :code:`vagrant ssh`, change into the directory :code:`/vagrant` and
-open a new screen or tmux session. Aftwards run the worker, producer, and 
-tracker services in the foreground, each service in a separate window.
-
-.. code::
-
-    $ python openstack_application_tutorial/worker.py
-    $ python openstack_application_tutorial/tracker.py
-    $ python openstack_application_tutorial/producer.py
+Login with :code:`vagrant ssh`, change into the directory :code:`/vagrant`.
 
 RabbitMQ server
 ~~~~~~~~~~~~~~~
@@ -60,6 +52,28 @@ MySQL server
 
 The password of the user :code:`root` is :code:`secretsecret`. The password of the user :code:`tutorial`
 for the database :code:`tutorial` is also :code:`secretsecret`.
+
+Virtual environment
+-------------------
+
+Create a new virtual environment, install all required dependencies and
+the application itself.
+
+.. code::
+
+    $ virtualenv .venv
+    $ source .venv/bin/activate
+    $ pip install -r requirements.txt
+    $ python setup.py install
+
+Now open a new screen or tmux session. Aftwards run the worker, producer, and 
+tracker services in the foreground, each service in a separate window.
+
+.. code::
+
+    $ source .venv/bin/activate; oat-worker
+    $ source .venv/bin/activate; oat-tracker
+    $ source .venv/bin/activate; oat-producer
 
 Example outputs
 ---------------
