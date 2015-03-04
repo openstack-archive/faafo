@@ -15,28 +15,23 @@
 # based on http://code.activestate.com/recipes/577120-julia-fractals/
 
 import argparse
+import json
 import logging
 import sys
 
 import daemon
 import kombu
 from kombu.mixins import ConsumerMixin
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import requests
 
-from openstack_application_tutorial import models
 from openstack_application_tutorial import queues
 
 
 class Tracker(ConsumerMixin):
 
-    def __init__(self, amqp_url, database_url):
+    def __init__(self, amqp_url, api_url):
         self.connection = kombu.Connection(amqp_url)
-        engine = create_engine(database_url)
-        models.Base.metadata.bind = engine
-        models.Base.metadata.create_all(engine)
-        maker = sessionmaker(bind=engine)
-        self.session = maker()
+        self.api_url = api_url
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=queues.result_queues,
@@ -47,14 +42,16 @@ class Tracker(ConsumerMixin):
         logging.info("processing result %s" % body['uuid'])
         logging.info("elapsed time %f seconds" % body['duration'])
         logging.info("checksum %s" % body['checksum'])
-        try:
-            fractal = self.session.query(models.Fractal).filter(
-                models.Fractal.uuid == str(body['uuid'])).one()
-            fractal.duration = body['duration']
-            fractal.checksum = body['checksum']
-            self.session.commit()
-        except Exception:
-            pass
+        result = {
+            'duration': float(body['duration']),
+            'checksum': str(body['checksum'])
+        }
+        # NOTE(berendt): only necessary when using requests < 2.4.2
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'text/plain'}
+        requests.post("%s/v1/fractals/%s/result" %
+                      (self.api_url, str(body['uuid'])),
+                      json.dumps(result), headers=headers)
         message.ack()
 
 
@@ -70,8 +67,8 @@ def parse_command_line_arguments():
         "--amqp-url", type=str, help="AMQP connection URL",
         default="amqp://tutorial:secretsecret@localhost:5672/")
     parser.add_argument(
-        "--database-url", type=str, help="database connection URL",
-        default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
+        "--api-url", type=str, help="API connection URL",
+        default="http://localhost:5000")
     parser.add_argument(
         "--log-file", type=str, help="write logs to this file", default=None)
     parser.add_argument(
@@ -82,7 +79,7 @@ def parse_command_line_arguments():
 def main():
     args = parse_command_line_arguments()
     initialize_logging(args.log_file)
-    tracker = Tracker(args.amqp_url, args.database_url)
+    tracker = Tracker(args.amqp_url, args.api_url)
 
     if args.daemonize:
         with daemon.DaemonContext():

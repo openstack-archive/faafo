@@ -1,10 +1,12 @@
-Openstack tutorial application
+OpenStack tutorial application
 ==============================
 
 Workflow
 --------
 
 .. image:: images/diagram.png
+
+FIXME(berendt): Add new API service and webinterface to the workflow description.
 
 * The producer generates a random number of tasks with random parameters and a UUID as identifier.
 * The producer pushes the generated tasks into the exchange :code:`tasks`.
@@ -21,9 +23,11 @@ Workflow
 Frameworks
 ----------
 
+* http://flask.pocoo.org/
+* http://python-requests.org
+* http://www.sqlalchemy.org/
 * https://github.com/celery/kombu
 * https://pillow.readthedocs.org/
-* http://www.sqlalchemy.org/
 
 Example image
 -------------
@@ -57,6 +61,7 @@ The RabbitMQ server and the MySQL server are running on the machine :code:`servi
 
 There is a machine for each service of the tutorial application:
 
+* :code:`api` - :code:`vagrant ssh api` - :code:`sh run_api.sh`
 * :code:`producer` - :code:`vagrant ssh producer` - :code:`sh run_producer.sh`
 * :code:`tracker` - :code:`vagrant ssh tracker` - :code:`sh run_tracker.sh`
 * :code:`worker` - :code:`vagrant ssh worker` - :code:`sh run_worker.sh`
@@ -86,17 +91,23 @@ the application itself.
     $ pip install -r requirements.txt
     $ python setup.py install
 
-Now open a new screen or tmux session. Aftwards run the worker, producer, and 
+Now open a new screen or tmux session. Aftwards run the api, worker, producer, and 
 tracker services in the foreground, each service in a separate window.
 
 .. code::
 
+    $ source .venv/bin/activate; oat-api
     $ source .venv/bin/activate; oat-worker
     $ source .venv/bin/activate; oat-tracker
     $ source .venv/bin/activate; oat-producer
 
 Example outputs
 ---------------
+
+API Service
+~~~~~~~~~~~
+
+FIXME(berendt): add output of the API service
 
 Producer service
 ~~~~~~~~~~~~~~~~

@@ -60,4 +60,13 @@ Vagrant.configure(2) do |config|
       ansible.tags = "producer"
     end
   end
+  config.vm.define "api" do |api|
+    api.vm.hostname= "api"
+    api.vm.network :private_network, ip: '10.15.15.50'
+    api.vm.provision "ansible" do |ansible|
+      ansible.playbook = "ansible/playbook.yaml"
+      ansible.tags = "api"
+    end
+    api.vm.network "forwarded_port", guest: 5000, host: 5000 
+  end
 end

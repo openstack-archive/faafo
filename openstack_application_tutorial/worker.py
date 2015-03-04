@@ -92,10 +92,15 @@ class Worker(ConsumerMixin):
 
     def process_task(self, body, message):
         logging.info("processing task %s" % body['uuid'])
+        logging.debug(body)
         start_time = time.time()
-        juliaset = JuliaSet(body['width'], body['height'], body['xa'],
-                            body['xb'], body['ya'], body['yb'],
-                            body['iterations'])
+        juliaset = JuliaSet(body['dimension']['width'],
+                            body['dimension']['height'],
+                            body['parameter']['xa'],
+                            body['parameter']['xb'],
+                            body['parameter']['ya'],
+                            body['parameter']['yb'],
+                            body['parameter']['iterations'])
         filename = os.path.join(self.target, "%s.png" % body['uuid'])
         elapsed_time = time.time() - start_time
         logging.info("task %s processed in %f seconds" %

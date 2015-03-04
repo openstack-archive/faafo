@@ -1,0 +1,5 @@
+---
+- apt: name={{ item }} state=latest
+  with_items:
+    - python-flask
+    - python-flask-sqlalchemy

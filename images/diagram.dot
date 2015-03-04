@@ -1,11 +1,15 @@
-digraph { 
-  node [shape=box]; Producer; Database;
-  Producer -> Database [color=orange];
+digraph {
+  API -> Database [color=green];
+  API -> Database [color=orange];
+  Database -> API [color=red];
+  API -> Webinterface [color=red];
+  Producer -> API [color=orange];
   Producer -> "Queue Service" [color=orange];
-  Tracker -> Database [color=green];
+  Tracker -> API [color=green];
   "Queue Service" -> Tracker [color=green];
   "Queue Service" -> Worker [color=orange];
   Worker -> "Image File" [color=blue];
   Worker -> "Queue Service" [color=green];
   "Image File" -> "Storage Backend" [color=blue];
+  "Storage Backend" -> Webinterface [color=red];
 }

@@ -13,6 +13,7 @@
 # under the License.
 
 import argparse
+import json
 import logging
 import random
 import sys
@@ -22,10 +23,8 @@ import uuid
 import daemon
 import kombu
 from kombu.pools import producers
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import requests
 
-from openstack_application_tutorial import models
 from openstack_application_tutorial import queues
 
 
@@ -41,8 +40,8 @@ def parse_command_line_arguments():
         "--amqp-url", type=str, help="AMQP connection URL",
         default="amqp://tutorial:secretsecret@localhost:5672/")
     parser.add_argument(
-        "--database-url", type=str, help="database connection URL",
-        default="mysql://tutorial:secretsecret@localhost:3306/tutorial")
+        "--api-url", type=str, help="API connection URL",
+        default="http://localhost:5000")
     parser.add_argument(
         "--log-file", type=str, help="write logs to this file", default=None)
     parser.add_argument(
@@ -99,38 +98,38 @@ def generate_task(args):
     ya = random.uniform(args.min_ya, args.max_ya)
     yb = random.uniform(args.min_yb, args.max_yb)
 
-    return {
-        'uuid': uuid.uuid4(),
-        'width': width,
-        'height': height,
-        'iterations': iterations,
-        'xa': xa,
-        'xb': xb,
-        'ya': ya,
-        'yb': yb
+    task = {
+        'uuid': str(uuid.uuid4()),
+        'dimension': {
+            'width': width,
+            'height': height,
+        },
+        'parameter': {
+            'iterations': iterations,
+            'xa': xa,
+            'xb': xb,
+            'ya': ya,
+            'yb': yb
+        }
     }
 
+    return task
 
-def run(args, connection, session):
+
+def run(args, messaging, api_url):
     while True:
         random.seed()
         number = random.randint(args.min_tasks, args.max_tasks)
         logging.info("generating %d task(s)" % number)
         for i in xrange(0, number):
             task = generate_task(args)
-            fractal = models.Fractal(
-                uuid=task['uuid'],
-                width=task['width'],
-                height=task['height'],
-                xa=task['xa'],
-                xb=task['xb'],
-                ya=task['ya'],
-                yb=task['yb'],
-                iterations=task['iterations'])
-            session.add(fractal)
-            session.commit()
+            # NOTE(berendt): only necessary when using requests < 2.4.2
+            headers = {'Content-type': 'application/json',
+                       'Accept': 'text/plain'}
+            requests.post("%s/v1/fractals" % api_url, json.dumps(task),
+                          headers=headers)
             logging.info("generated task: %s" % task)
-            with producers[connection].acquire(block=True) as producer:
+            with producers[messaging].acquire(block=True) as producer:
                 producer.publish(
                     task,
                     serializer='pickle',
@@ -149,22 +148,14 @@ def run(args, connection, session):
 def main():
     args = parse_command_line_arguments()
     initialize_logging(args.log_file)
-
-    connection = kombu.Connection(args.amqp_url)
-    engine = create_engine(args.database_url)
-
-    models.Base.metadata.bind = engine
-    models.Base.metadata.create_all(engine)
-
-    maker = sessionmaker(bind=engine)
-    session = maker()
+    messaging = kombu.Connection(args.amqp_url)
 
     if args.daemonize:
         with daemon.DaemonContext():
-            run(args, connection, session)
+            run(args, messaging, args.api_url)
     else:
         try:
-            run(args, connection, session)
+            run(args, messaging, args.api_url)
         except KeyboardInterrupt:
             return 0
 

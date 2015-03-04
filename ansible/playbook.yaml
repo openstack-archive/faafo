@@ -5,6 +5,7 @@
   - apt: update-cache=yes upgrade=yes
   - include: tasks/database.yaml tags=database
   - include: tasks/messaging.yaml tags=messaging
+  - include: tasks/api.yaml tags=api
 
   - apt: name={{ item }} state=latest
     with_items:
@@ -13,14 +14,15 @@
       - python-daemon
       - python-dev
       - python-kombu
-      - python-pillow
-      - python-sqlalchemy
-      - python-virtualenv
       - python-pbr
+      - python-pillow
+      - python-requests
+      - python-virtualenv
     tags:
       - worker
       - producer
       - tracker
+      - api
 
   - command: python setup.py install
     args:
@@ -29,6 +31,7 @@
       - worker
       - producer
       - tracker
+      - api
 
   - copy: src=files/run_worker.sh dest=/home/vagrant/run_worker.sh mode=0755
     tags: worker
@@ -36,3 +39,5 @@
     tags: tracker
   - copy: src=files/run_producer.sh dest=/home/vagrant/run_producer.sh mode=0755
     tags: producer
+  - copy: src=files/run_api.sh dest=/home/vagrant/run_api.sh mode=0755
+    tags: api

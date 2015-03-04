@@ -6,4 +6,6 @@ kombu
 mysql
 pillow
 python-daemon
-sqlalchemy
+requests
+flask
+flask-sqlalchemy
