@@ -3,39 +3,36 @@
 
   tasks:
   - apt: update-cache=yes upgrade=yes
+  - include: tasks/database.yaml tags=database
+  - include: tasks/messaging.yaml tags=messaging
+
   - apt: name={{ item }} state=latest
     with_items:
-      - expect
       - git
-      - ibmysqlclient-dev
-      - mysql-client
-      - mysql-server
+      - libmysqlclient-dev
       - python-daemon
       - python-dev
       - python-kombu
-      - python-mysqldb
       - python-pillow
       - python-sqlalchemy
       - python-virtualenv
-      - rabbitmq-server
-  - service: name=rabbitmq-server state=started enabled=yes
-  - rabbitmq_user: user=guest
-                   password=secretsecret
-  - rabbitmq_user: user=tutorial
-                   password=secretsecret
-                   vhost=/
-                   configure_priv=.*
-                   read_priv=.*
-                   write_priv=.*
-                   state=present
-  - rabbitmq_plugin: names=rabbitmq_management state=enabled
-  - copy: src=files/my.cnf dest=/etc/my.cnf
-  - service: name=mysql state=restarted enabled=yes
-  - copy: src=files/mysql_secure_installation.sh
-          dest=/root/mysql_secure_installation.sh
-          mode=0755
-  - command: /root/mysql_secure_installation.sh
-             creates=/root/mysql_secure_installation.done
-  - copy: src=files/client.my.cnf dest=/root/.my.cnf
-  - mysql_db: name=tutorial state=present
-  - mysql_user: name=tutorial password=secretsecret priv=tutorial.*:ALL state=present
+      - python-pbr
+    tags:
+      - worker
+      - producer
+      - tracker
+
+  - command: python setup.py install
+    args:
+      chdir: /vagrant
+    tags:
+      - worker
+      - producer
+      - tracker
+
+  - copy: src=files/run_worker.sh dest=/home/vagrant/run_worker.sh mode=0755
+    tags: worker
+  - copy: src=files/run_tracker.sh dest=/home/vagrant/run_tracker.sh mode=0755
+    tags: tracker
+  - copy: src=files/run_producer.sh dest=/home/vagrant/run_producer.sh mode=0755
+    tags: producer

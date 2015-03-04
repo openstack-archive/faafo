@@ -1,0 +1,15 @@
+---
+- apt: name={{ item }} state=latest
+  with_items:
+    - rabbitmq-server
+- service: name=rabbitmq-server state=started enabled=yes
+- rabbitmq_user: user=guest
+                 password=secretsecret
+- rabbitmq_user: user=tutorial
+                 password=secretsecret
+                 vhost=/
+                 configure_priv=.*
+                 read_priv=.*
+                 write_priv=.*
+                 state=present
+- rabbitmq_plugin: names=rabbitmq_management state=enabled

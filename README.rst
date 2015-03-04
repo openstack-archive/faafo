@@ -35,11 +35,31 @@ Vagrant environment
 
 The installation of Vagrant is described at https://docs.vagrantup.com/v2/installation/index.html.
 
+The Vagrant plugin `vagrant-hostmanager <https://github.com/smdahlen/vagrant-hostmanager>`_ is required.
+
+.. code::
+
+    $ vagrant plugin install vagrant-hostmanager
+
+To speedup the provisioning you can install the Vagrant plugin `vagrant-cachier <https://github.com/fgrehm/vagrant-cachier>`_.
+
+.. code::
+
+    $ vagrant plugin install vagrant-cachier
+
+Bootstrap the Vagrant environment.
+
 .. code::
 
     $ vagrant up
 
-Login with :code:`vagrant ssh`, change into the directory :code:`/vagrant`.
+The RabbitMQ server and the MySQL server are running on the machine :code:`service.`
+
+There is a machine for each service of the tutorial application:
+
+* :code:`producer` - :code:`vagrant ssh producer` - :code:`sh run_producer.sh`
+* :code:`tracker` - :code:`vagrant ssh tracker` - :code:`sh run_tracker.sh`
+* :code:`worker` - :code:`vagrant ssh worker` - :code:`sh run_worker.sh`
 
 RabbitMQ server
 ~~~~~~~~~~~~~~~

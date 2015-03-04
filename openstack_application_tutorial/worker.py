@@ -129,10 +129,10 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--target", type=str, help="Target directory",
-        default="/home/vagrant")
+        default="/tmp")
     parser.add_argument(
         "--amqp-url", type=str, help="AMQP connection URL",
-        default="amqp://tutorial:secretsecret@localhost:5672//")
+        default="amqp://tutorial:secretsecret@localhost:5672/")
     parser.add_argument(
         "--log-file", type=str, help="write logs to this file", default=None)
     parser.add_argument(
