@@ -37,6 +37,9 @@ Example image
 Vagrant environment
 -------------------
 
+The `Vagrant <https://www.vagrantup.com/>`_ environment and the `Ansible <http://www.ansible.com/home>`_
+playbook is used only for local tests and development of the application.
+
 The installation of Vagrant is described at https://docs.vagrantup.com/v2/installation/index.html.
 
 The Vagrant plugin `vagrant-hostmanager <https://github.com/smdahlen/vagrant-hostmanager>`_ is required.
