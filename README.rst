@@ -115,6 +115,8 @@ FIXME(berendt): add output of the API service
 Producer service
 ~~~~~~~~~~~~~~~~
 
+FIXME(berendt): update output (introduction of oslo.logging)
+
 .. code::
 
     2015-02-12 22:21:42,870 generating 2 task(s)
@@ -125,6 +127,8 @@ Producer service
 Tracker service
 ~~~~~~~~~~~~~~~
 
+FIXME(berendt): update output (introduction of oslo.logging)
+
 .. code::
 
     2015-02-12 22:20:26,630 processing result be42a131-e4aa-4db5-80d1-1956784f4b81
@@ -133,6 +137,8 @@ Tracker service
 
 Worker service
 ~~~~~~~~~~~~~~
+
+FIXME(berendt): update output (introduction of oslo.logging)
 
 .. code::
 

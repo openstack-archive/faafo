@@ -14,17 +14,45 @@
 
 # based on http://code.activestate.com/recipes/577120-julia-fractals/
 
-import argparse
 import json
-import logging
 import sys
 
 import daemon
 import kombu
 from kombu.mixins import ConsumerMixin
+from oslo_config import cfg
+from oslo_log import log
 import requests
 
 from openstack_application_tutorial import queues
+from openstack_application_tutorial import version
+
+
+CONF = cfg.CONF
+
+cli_opts = [
+    cfg.BoolOpt('daemonize',
+                default=False,
+                help='Run in background.'),
+    cfg.StrOpt('amqp-url',
+               default='amqp://tutorial:secretsecret@localhost:5672/',
+               help='AMQP connection URL'),
+    cfg.StrOpt('api-url',
+               default='http://localhost:5000',
+               help='API connection URL')
+]
+
+CONF.register_cli_opts(cli_opts)
+
+log.register_options(CONF)
+log.set_defaults(default_log_levels=[])
+log.setup(CONF, 'tracker', version=version.version_info.version_string())
+
+CONF(args=sys.argv[1:],
+     project='tracker',
+     version=version.version_info.version_string())
+
+LOG = log.getLogger(__name__)
 
 
 class Tracker(ConsumerMixin):
@@ -39,9 +67,9 @@ class Tracker(ConsumerMixin):
                          callbacks=[self.process_result])]
 
     def process_result(self, body, message):
-        logging.info("processing result %s" % body['uuid'])
-        logging.info("elapsed time %f seconds" % body['duration'])
-        logging.info("checksum %s" % body['checksum'])
+        LOG.info("processing result %s" % body['uuid'])
+        LOG.info("elapsed time %f seconds" % body['duration'])
+        LOG.info("checksum %s" % body['checksum'])
         result = {
             'duration': float(body['duration']),
             'checksum': str(body['checksum'])
@@ -55,42 +83,19 @@ class Tracker(ConsumerMixin):
         message.ack()
 
 
-def initialize_logging(filename):
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO,
-                        filename=filename)
-
-
-def parse_command_line_arguments():
-    """Parse the command line arguments."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--amqp-url", type=str, help="AMQP connection URL",
-        default="amqp://tutorial:secretsecret@localhost:5672/")
-    parser.add_argument(
-        "--api-url", type=str, help="API connection URL",
-        default="http://localhost:5000")
-    parser.add_argument(
-        "--log-file", type=str, help="write logs to this file", default=None)
-    parser.add_argument(
-        "--daemonize", action="store_true", help="run in background")
-    return parser.parse_args()
-
-
 def main():
-    args = parse_command_line_arguments()
-    initialize_logging(args.log_file)
-    tracker = Tracker(args.amqp_url, args.api_url)
+    LOG.info("XXX")
 
-    if args.daemonize:
+    tracker = Tracker(CONF.amqp_url, CONF.api_url)
+
+    if CONF.daemonize:
         with daemon.DaemonContext():
             tracker.run()
     else:
         try:
             tracker.run()
-        except KeyboardInterrupt:
-            return 0
-
-    return 0
+        except Exception as e:
+            sys.exit("ERROR: %s" % e)
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

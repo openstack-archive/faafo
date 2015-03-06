@@ -12,9 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import argparse
 import json
-import logging
 import random
 import sys
 import time
@@ -23,80 +21,93 @@ import uuid
 import daemon
 import kombu
 from kombu.pools import producers
+from oslo_config import cfg
+from oslo_log import log
 import requests
 
 from openstack_application_tutorial import queues
+from openstack_application_tutorial import version
 
 
-def initialize_logging(filename):
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO,
-                        filename=filename)
+CONF = cfg.CONF
+
+cli_opts = [
+    cfg.BoolOpt('daemonize',
+                default=False,
+                help='Run in background.'),
+    cfg.StrOpt('amqp-url',
+               default='amqp://tutorial:secretsecret@localhost:5672/',
+               help='AMQP connection URL'),
+    cfg.StrOpt('api-url',
+               default='http://localhost:5000',
+               help='API connection URL')
+]
+
+producer_opts = [
+    cfg.BoolOpt("one-shot", default=False,
+                help="Generate one set of tasks and exit."),
+    cfg.IntOpt("max-height", default=1024,
+               help="The maximum height of the generate image."),
+    cfg.IntOpt("max-width", default=1024,
+               help="The maximum width of the generated image."),
+    cfg.FloatOpt("max-xa", default=-4.0,
+                 help="The maximum value for the parameter 'xa'."),
+    cfg.FloatOpt("max-xb", default=4.0,
+                 help="The maximum value for the parameter 'xb'."),
+    cfg.FloatOpt("max-ya", default=-3,
+                 help="The maximum value for the parameter 'ya'."),
+    cfg.FloatOpt("max-yb", default=3,
+                 help="The maximum value for the parameter 'yb'."),
+    cfg.IntOpt("max-iterations", default=512,
+               help="The maximum number of iterations."),
+    cfg.IntOpt("min-height", default=256,
+               help="The minimum height of the generate image."),
+    cfg.IntOpt("min-width", default=256,
+               help="The minimum width of the generated image."),
+    cfg.FloatOpt("min-xa", default=-1.0,
+                 help="The minimum value for the parameter 'xa'."),
+    cfg.FloatOpt("min-xb", default=1.0,
+                 help="The minimum value for the parameter 'xb'."),
+    cfg.FloatOpt("min-ya", default=-0.5,
+                 help="The minimum value for the parameter 'ya'."),
+    cfg.FloatOpt("min-yb", default=0.5,
+                 help="The minimum value for the parameter 'yb'."),
+    cfg.IntOpt("min-iterations", default=128,
+               help="The minimum number of iterations."),
+    cfg.FloatOpt("min-pause", default=1.0,
+                 help="The minimum pause in seconds."),
+    cfg.FloatOpt("max-pause", default=10.0,
+                 help="The maximum pause in seconds."),
+    cfg.IntOpt("min-tasks", default=1,
+               help="The minimum number of generated tasks."),
+    cfg.IntOpt("max-tasks", default=10,
+               help="The maximum number of generated tasks.")
+]
+
+CONF.register_cli_opts(cli_opts)
+CONF.register_cli_opts(producer_opts)
+
+log.register_options(CONF)
+log.setup(CONF, 'producer', version=version.version_info.version_string())
+log.set_defaults()
+
+CONF(args=sys.argv[1:],
+     project='producer',
+     version=version.version_info.version_string())
+
+LOG = log.getLogger(__name__)
 
 
-def parse_command_line_arguments():
-    """Parse the command line arguments."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--amqp-url", type=str, help="AMQP connection URL",
-        default="amqp://tutorial:secretsecret@localhost:5672/")
-    parser.add_argument(
-        "--api-url", type=str, help="API connection URL",
-        default="http://localhost:5000")
-    parser.add_argument(
-        "--log-file", type=str, help="write logs to this file", default=None)
-    parser.add_argument(
-        "--daemonize", action="store_true", help="run in background")
-    parser.add_argument("--one-shot", action='store_true',
-                        help="Generate one set of tasks and exit.")
-    parser.add_argument("--max-height", type=int, default=1024,
-                        help="The maximum height of the generate image.")
-    parser.add_argument("--max-width", type=int, default=1024,
-                        help="The maximum width of the generated image.")
-    parser.add_argument("--max-xa", type=float, default=-4.0,
-                        help="The maximum value for the parameter 'xa'.")
-    parser.add_argument("--max-xb", type=float, default=4.0,
-                        help="The maximum value for the parameter 'xb'.")
-    parser.add_argument("--max-ya", type=float, default=-3,
-                        help="The maximum value for the parameter 'ya'.")
-    parser.add_argument("--max-yb", type=float, default=3,
-                        help="The maximum value for the parameter 'yb'.")
-    parser.add_argument("--max-iterations", type=int, default=512,
-                        help="The maximum number of iterations.")
-    parser.add_argument("--min-height", type=int, default=256,
-                        help="The minimum height of the generate image.")
-    parser.add_argument("--min-width", type=int, default=256,
-                        help="The minimum width of the generated image.")
-    parser.add_argument("--min-xa", type=float, default=-1.0,
-                        help="The minimum value for the parameter 'xa'.")
-    parser.add_argument("--min-xb", type=float, default=1.0,
-                        help="The minimum value for the parameter 'xb'.")
-    parser.add_argument("--min-ya", type=float, default=-0.5,
-                        help="The minimum value for the parameter 'ya'.")
-    parser.add_argument("--min-yb", type=float, default=0.5,
-                        help="The minimum value for the parameter 'yb'.")
-    parser.add_argument("--min-iterations", type=int, default=128,
-                        help="The minimum number of iterations.")
-    parser.add_argument("--min-pause", type=float, default=1.0,
-                        help="The minimum pause in seconds.")
-    parser.add_argument("--max-pause", type=float, default=10.0,
-                        help="The maximum pause in seconds.")
-    parser.add_argument("--min-tasks", type=int, default=1,
-                        help="The minimum number of generated tasks.")
-    parser.add_argument("--max-tasks", type=int, default=10,
-                        help="The maximum number of generated tasks.")
-    return parser.parse_args()
-
-
-def generate_task(args):
+def generate_task():
     random.seed()
 
-    width = random.randint(args.min_width, args.max_width)
-    height = random.randint(args.min_height, args.max_height)
-    iterations = random.randint(args.min_iterations, args.max_iterations)
-    xa = random.uniform(args.min_xa, args.max_xa)
-    xb = random.uniform(args.min_xb, args.max_xb)
-    ya = random.uniform(args.min_ya, args.max_ya)
-    yb = random.uniform(args.min_yb, args.max_yb)
+    width = random.randint(CONF.min_width, CONF.max_width)
+    height = random.randint(CONF.min_height, CONF.max_height)
+    iterations = random.randint(CONF.min_iterations, CONF.max_iterations)
+    xa = random.uniform(CONF.min_xa, CONF.max_xa)
+    xb = random.uniform(CONF.min_xb, CONF.max_xb)
+    ya = random.uniform(CONF.min_ya, CONF.max_ya)
+    yb = random.uniform(CONF.min_yb, CONF.max_yb)
 
     task = {
         'uuid': str(uuid.uuid4()),
@@ -116,19 +127,19 @@ def generate_task(args):
     return task
 
 
-def run(args, messaging, api_url):
+def run(messaging, api_url):
     while True:
         random.seed()
-        number = random.randint(args.min_tasks, args.max_tasks)
-        logging.info("generating %d task(s)" % number)
+        number = random.randint(CONF.min_tasks, CONF.max_tasks)
+        LOG.info("generating %d task(s)" % number)
         for i in xrange(0, number):
-            task = generate_task(args)
+            task = generate_task()
             # NOTE(berendt): only necessary when using requests < 2.4.2
             headers = {'Content-type': 'application/json',
                        'Accept': 'text/plain'}
             requests.post("%s/v1/fractals" % api_url, json.dumps(task),
                           headers=headers)
-            logging.info("generated task: %s" % task)
+            LOG.info("generated task: %s" % task)
             with producers[messaging].acquire(block=True) as producer:
                 producer.publish(
                     task,
@@ -137,29 +148,26 @@ def run(args, messaging, api_url):
                     declare=[queues.task_exchange],
                     routing_key='tasks')
 
-        if args.one_shot:
+        if CONF.one_shot:
             break
 
-        pause = random.uniform(args.min_pause, args.max_pause)
-        logging.info("sleeping for %f seconds" % pause)
+        pause = random.uniform(CONF.min_pause, CONF.max_pause)
+        LOG.info("sleeping for %f seconds" % pause)
         time.sleep(pause)
 
 
 def main():
-    args = parse_command_line_arguments()
-    initialize_logging(args.log_file)
-    messaging = kombu.Connection(args.amqp_url)
+    messaging = kombu.Connection(CONF.amqp_url)
 
-    if args.daemonize:
+    if CONF.daemonize:
         with daemon.DaemonContext():
-            run(args, messaging, args.api_url)
+            run(messaging, CONF.api_url)
     else:
         try:
-            run(args, messaging, args.api_url)
-        except KeyboardInterrupt:
-            return 0
+            run(messaging, CONF.api_url)
+        except Exception as e:
+            sys.exit("ERROR: %s" % e)
 
-    return 0
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

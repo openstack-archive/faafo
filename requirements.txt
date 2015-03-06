@@ -1,7 +1,6 @@
 pbr>=0.6,!=0.7,<1.0
 anyjson
 amqp
-argparse
 kombu
 mysql
 pillow
@@ -9,3 +8,5 @@ python-daemon
 requests
 flask
 flask-sqlalchemy
+oslo.config
+oslo.log

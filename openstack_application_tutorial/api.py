@@ -12,36 +12,41 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import argparse
 import json
-import logging
+import sys
 
 import flask
 from flask.ext.sqlalchemy import SQLAlchemy
+from oslo_config import cfg
+from oslo_log import log
 
+from openstack_application_tutorial import version
 
-def initialize_logging(filename):
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO,
-                        filename=filename)
+CONF = cfg.CONF
 
+cli_opts = [
+    cfg.StrOpt('listen-address',
+               default='0.0.0.0',
+               help='Listen address.'),
+    cfg.StrOpt('database-url',
+               default='sqlite:////tmp/oat.db',
+               help='Database connection URL.')
+]
 
-def parse_command_line_arguments():
-    """Parse the command line arguments."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--database-url", type=str, help="database connection URL",
-        default="sqlite:////tmp/oat.db")
-    parser.add_argument(
-        "--log-file", type=str, help="write logs to this file", default=None)
-    parser.add_argument(
-        "--daemonize", action="store_true", help="run in background")
-    return parser.parse_args()
+CONF.register_cli_opts(cli_opts)
 
+log.register_options(CONF)
+log.set_defaults()
+log.setup(CONF, 'api', version=version.version_info.version_string())
+
+CONF(args=sys.argv[1:],
+     project='api',
+     version=version.version_info.version_string())
+
+LOG = log.getLogger(__name__)
 
 app = flask.Flask(__name__)
-args = parse_command_line_arguments()
-initialize_logging(args.log_file)
-app.config['SQLALCHEMY_DATABASE_URI'] = args.database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = CONF.database_url
 db = SQLAlchemy(app)
 
 
@@ -81,7 +86,7 @@ def publish_result(fractal_id):
     if (not flask.request.json or
         not flask.request.json.viewkeys() & {
             'duration', 'checksum'}):
-        logging.error("wrong request: %s" % flask.request.json)
+        LOG.error("wrong request: %s" % flask.request.json)
         flask.abort(400)
 
     fractal = get_fractal_from_database(fractal_id)
@@ -107,7 +112,7 @@ def create_fractal():
             'xa', 'xb', 'ya', 'yb', 'iterations'} or
         not flask.request.json['dimension'].viewkeys() >= {
             'width', 'height'}):
-        logging.error("wrong request: %s" % flask.request.json)
+        LOG.error("wrong request: %s" % flask.request.json)
         flask.abort(400)
 
     try:
@@ -151,8 +156,8 @@ def not_found(error):
 
 def main():
     db.create_all()
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host=CONF.listen_address, debug=CONF.debug)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
