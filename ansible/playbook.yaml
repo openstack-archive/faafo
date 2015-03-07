@@ -3,9 +3,10 @@
 
   tasks:
   - apt: update-cache=yes upgrade=yes
+  - include: tasks/api.yaml tags=api
   - include: tasks/database.yaml tags=database
   - include: tasks/messaging.yaml tags=messaging
-  - include: tasks/api.yaml tags=api
+  - include: tasks/webinterface.yaml tags=webinterface
 
   - apt: name={{ item }} state=latest
     with_items:
