@@ -77,15 +77,13 @@ class Tracker(ConsumerMixin):
         # NOTE(berendt): only necessary when using requests < 2.4.2
         headers = {'Content-type': 'application/json',
                    'Accept': 'text/plain'}
-        requests.post("%s/v1/fractals/%s/result" %
-                      (self.api_url, str(body['uuid'])),
-                      json.dumps(result), headers=headers)
+        requests.put("%s/api/fractal/%s" %
+                     (self.api_url, str(body['uuid'])),
+                     json.dumps(result), headers=headers)
         message.ack()
 
 
 def main():
-    LOG.info("XXX")
-
     tracker = Tracker(CONF.amqp_url, CONF.api_url)
 
     if CONF.daemonize:

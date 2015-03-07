@@ -111,17 +111,13 @@ def generate_task():
 
     task = {
         'uuid': str(uuid.uuid4()),
-        'dimension': {
-            'width': width,
-            'height': height,
-        },
-        'parameter': {
-            'iterations': iterations,
-            'xa': xa,
-            'xb': xb,
-            'ya': ya,
-            'yb': yb
-        }
+        'width': width,
+        'height': height,
+        'iterations': iterations,
+        'xa': xa,
+        'xb': xb,
+        'ya': ya,
+        'yb': yb
     }
 
     return task
@@ -137,7 +133,7 @@ def run(messaging, api_url):
             # NOTE(berendt): only necessary when using requests < 2.4.2
             headers = {'Content-type': 'application/json',
                        'Accept': 'text/plain'}
-            requests.post("%s/v1/fractals" % api_url, json.dumps(task),
+            requests.post("%s/api/fractal" % api_url, json.dumps(task),
                           headers=headers)
             LOG.info("generated task: %s" % task)
             with producers[messaging].acquire(block=True) as producer:

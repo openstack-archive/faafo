@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -12,11 +10,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import json
 import sys
 
 import flask
-from flask.ext.sqlalchemy import SQLAlchemy
+import flask.ext.restless
+import flask.ext.sqlalchemy
 from oslo_config import cfg
 from oslo_log import log
 
@@ -28,8 +26,11 @@ cli_opts = [
     cfg.StrOpt('listen-address',
                default='0.0.0.0',
                help='Listen address.'),
+    cfg.IntOpt('bind-port',
+               default='5000',
+               help='Bind port.'),
     cfg.StrOpt('database-url',
-               default='sqlite:////tmp/oat.db',
+               default='sqlite:////tmp/sqlite.db',
                help='Database connection URL.')
 ]
 
@@ -46,118 +47,34 @@ CONF(args=sys.argv[1:],
 LOG = log.getLogger(__name__)
 
 app = flask.Flask(__name__)
+app.config['DEBUG'] = CONF.debug
 app.config['SQLALCHEMY_DATABASE_URI'] = CONF.database_url
-db = SQLAlchemy(app)
+db = flask.ext.sqlalchemy.SQLAlchemy(app)
 
 
 class Fractal(db.Model):
-    __tablename__ = 'fractals'
-
-    fractal_id = db.Column(db.String(36), primary_key=True)
-    data = db.Column(db.Text())
+    uuid = db.Column(db.String(36), primary_key=True)
+    checksum = db.Column(db.String(256), unique=True)
+    duration = db.Column(db.Float)
+    width = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.Integer, nullable=False)
+    iterations = db.Column(db.Integer, nullable=False)
+    xa = db.Column(db.Float, nullable=False)
+    xb = db.Column(db.Float, nullable=False)
+    ya = db.Column(db.Float, nullable=False)
+    yb = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return "<Fractal(uuid='%s')>" % self.uuid
+        return '<Fractal %s>' % self.uuid
 
 
-@app.route("/")
-def index():
-    return flask.jsonify({})
-
-
-def get_fractal_from_database(fractal_id):
-    try:
-        return Fractal.query.get(fractal_id)
-    except Exception:
-        return None
-
-
-def write_fractal_to_database(fractal_id, data):
-    fractal = Fractal(
-        fractal_id=fractal_id,
-        data=json.dumps(data)
-    )
-    db.session.add(fractal)
-    db.session.commit()
-
-
-@app.route('/v1/fractals/<string:fractal_id>/result', methods=['POST'])
-def publish_result(fractal_id):
-    if (not flask.request.json or
-        not flask.request.json.viewkeys() & {
-            'duration', 'checksum'}):
-        LOG.error("wrong request: %s" % flask.request.json)
-        flask.abort(400)
-
-    fractal = get_fractal_from_database(fractal_id)
-
-    if not fractal:
-        flask.abort(400)
-
-    data = json.loads(fractal.data)
-    data['checksum'] = str(flask.request.json['checksum'])
-    data['duration'] = float(flask.request.json['duration'])
-    fractal.data = json.dumps(data)
-    db.session.commit()
-    data['uuid'] = fractal_id
-    return flask.jsonify(data), 201
-
-
-@app.route('/v1/fractals', methods=['POST'])
-def create_fractal():
-    if (not flask.request.json or
-        not flask.request.json.viewkeys() >= {
-            'uuid', 'parameter', 'dimension'} or
-        not flask.request.json['parameter'].viewkeys() >= {
-            'xa', 'xb', 'ya', 'yb', 'iterations'} or
-        not flask.request.json['dimension'].viewkeys() >= {
-            'width', 'height'}):
-        LOG.error("wrong request: %s" % flask.request.json)
-        flask.abort(400)
-
-    try:
-        fractal_id = str(flask.request.json['uuid'])
-        xa = float(flask.request.json['parameter']['xa'])
-        xb = float(flask.request.json['parameter']['xb'])
-        ya = float(flask.request.json['parameter']['ya'])
-        yb = float(flask.request.json['parameter']['yb'])
-        iterations = int(flask.request.json['parameter']['iterations'])
-        width = int(flask.request.json['dimension']['width'])
-        height = int(flask.request.json['dimension']['height'])
-        fractal = {
-            'checksum': '',
-            'duration': 0.0,
-            'parameter': {
-                'xa': xa,
-                'xb': xb,
-                'ya': ya,
-                'yb': yb,
-                'iterations': iterations
-            },
-            'dimension': {
-                'width': width,
-                'height': height
-            }
-        }
-    except Exception:
-        flask.abort(400)
-
-    write_fractal_to_database(fractal_id, fractal)
-
-    fractal['uuid'] = fractal_id
-
-    return flask.jsonify(fractal), 201
-
-
-@app.errorhandler(404)
-def not_found(error):
-    return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
+db.create_all()
+manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 
 
 def main():
-    db.create_all()
-    app.run(host=CONF.listen_address, debug=CONF.debug)
-
+    manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'])
+    app.run(host=CONF.listen_address, port=CONF.bind_port)
 
 if __name__ == '__main__':
     main()
