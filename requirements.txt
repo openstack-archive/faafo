@@ -6,6 +6,7 @@ mysql
 pillow
 python-daemon
 requests
+flask-sqlalchemy
 flask-restless
 oslo.config
 oslo.log

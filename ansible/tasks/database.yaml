@@ -16,8 +16,8 @@
 - mysql_db: name=tutorial state=present
 - mysql_user: name=tutorial password=secretsecret priv=*.*:ALL host={{ item }} state=present
   with_items:
+    - api
     - localhost
     - producer
     - tracker
     - worker
-    - api
