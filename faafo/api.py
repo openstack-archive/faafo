@@ -18,7 +18,7 @@ import flask.ext.sqlalchemy
 from oslo_config import cfg
 from oslo_log import log
 
-from openstack_application_tutorial import version
+from faafo import version
 
 CONF = cfg.CONF
 

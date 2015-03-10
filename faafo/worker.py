@@ -28,8 +28,8 @@ from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
 
-from openstack_application_tutorial import queues
-from openstack_application_tutorial import version
+from faafo import queues
+from faafo import version
 
 
 CONF = cfg.CONF

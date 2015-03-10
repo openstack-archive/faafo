@@ -1,5 +1,5 @@
-OpenStack tutorial application
-==============================
+First App Application for OpenStack (faafo)
+===========================================
 
 Workflow
 --------
@@ -99,10 +99,10 @@ tracker services in the foreground, each service in a separate window.
 
 .. code::
 
-    $ source .venv/bin/activate; oat-api
-    $ source .venv/bin/activate; oat-worker
-    $ source .venv/bin/activate; oat-tracker
-    $ source .venv/bin/activate; oat-producer
+    $ source .venv/bin/activate; faafo-api
+    $ source .venv/bin/activate; faafo-worker
+    $ source .venv/bin/activate; faafo-tracker
+    $ source .venv/bin/activate; faafo-producer
 
 Example outputs
 ---------------

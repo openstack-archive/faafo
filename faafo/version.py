@@ -12,4 +12,4 @@
 
 import pbr.version
 
-version_info = pbr.version.VersionInfo('openstack-application-tutorial')
+version_info = pbr.version.VersionInfo('faafo')
