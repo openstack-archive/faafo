@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: Christian Berendt <christian@berendt.io>
+Workflow+1: Christian Berendt <christian@berendt.io>
+Submitted-by: Jenkins
+Submitted-at: Sat, 21 Mar 2015 08:08:44 +0000
+Reviewed-on: https://review.openstack.org/166321
+Project: stackforge/faafo
+Branch: refs/heads/master
