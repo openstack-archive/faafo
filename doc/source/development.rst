@@ -9,12 +9,6 @@ playbook is used only for local tests and development of the application.
 
 The installation of Vagrant is described at https://docs.vagrantup.com/v2/installation/index.html.
 
-The Vagrant plugin `vagrant-hostmanager <https://github.com/smdahlen/vagrant-hostmanager>`_ is required.
-
-.. code::
-
-    $ vagrant plugin install vagrant-hostmanager
-
 To speedup the provisioning you can install the Vagrant plugin `vagrant-cachier <https://github.com/fgrehm/vagrant-cachier>`_.
 
 .. code::
@@ -27,14 +21,19 @@ Bootstrap the Vagrant environment.
 
     $ vagrant up
 
-The RabbitMQ server and the MySQL server are running on the machine :code:`service.`
+Now it is possible to login with SSH.
 
-There is a machine for each service of the tutorial application:
+.. code::
 
-* :code:`api` - :code:`vagrant ssh api` - :code:`sh run_api.sh`
-* :code:`producer` - :code:`vagrant ssh producer` - :code:`sh run_producer.sh`
-* :code:`tracker` - :code:`vagrant ssh tracker` - :code:`sh run_tracker.sh`
-* :code:`worker` - :code:`vagrant ssh worker` - :code:`sh run_worker.sh`
+    $ vagrant ssh
+
+Open a new screen or tmux session. Aftwards run the api, worker, producer, and
+tracker services in the foreground, each service in a separate window.
+
+* :code:`sh run_api.sh`
+* :code:`sh run_producer.sh`
+* :code:`sh run_tracker.sh`
+* :code:`sh run_worker.sh`
 
 RabbitMQ server
 ~~~~~~~~~~~~~~~
@@ -45,8 +44,8 @@ possible with the user :code:`guest` and the password :code:`secretsecret`.
 MySQL server
 ~~~~~~~~~~~~
 
-The password of the user :code:`root` is :code:`secretsecret`. The password of the user :code:`tutorial`
-for the database :code:`tutorial` is also :code:`secretsecret`.
+The password of the user :code:`root` is :code:`secretsecret`. The password of the user :code:`faafo`
+for the database :code:`faafo` is also :code:`secretsecret`.
 
 Virtual environment
 -------------------
@@ -61,7 +60,7 @@ the application itself.
     $ pip install -r requirements.txt
     $ python setup.py install
 
-Now open a new screen or tmux session. Aftwards run the api, worker, producer, and
+Open a new screen or tmux session. Aftwards run the api, worker, producer, and
 tracker services in the foreground, each service in a separate window.
 
 .. code::
