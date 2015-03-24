@@ -14,27 +14,23 @@
 
 import json
 import random
-import sys
-import time
 import uuid
 
-import daemon
 import kombu
 from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
 import requests
 
+from faafo.openstack.common import periodic_task
+from faafo.openstack.common import service
 from faafo import queues
 from faafo import version
 
 
-CONF = cfg.CONF
+LOG = log.getLogger('faafo.producer')
 
 cli_opts = [
-    cfg.BoolOpt('daemonize',
-                default=False,
-                help='Run in background.'),
     cfg.StrOpt('amqp-url',
                default='amqp://faafo:secretsecret@localhost:5672/',
                help='AMQP connection URL'),
@@ -74,40 +70,28 @@ producer_opts = [
                  help="The minimum value for the parameter 'yb'."),
     cfg.IntOpt("min-iterations", default=128,
                help="The minimum number of iterations."),
-    cfg.FloatOpt("min-pause", default=1.0,
-                 help="The minimum pause in seconds."),
-    cfg.FloatOpt("max-pause", default=10.0,
-                 help="The maximum pause in seconds."),
     cfg.IntOpt("min-tasks", default=1,
                help="The minimum number of generated tasks."),
     cfg.IntOpt("max-tasks", default=10,
-               help="The maximum number of generated tasks.")
+               help="The maximum number of generated tasks."),
+    cfg.IntOpt("interval", default=10, help="Interval in seconds.")
 ]
 
-CONF.register_cli_opts(cli_opts)
-CONF.register_cli_opts(producer_opts)
-
-log.register_options(CONF)
-log.setup(CONF, 'producer', version=version.version_info.version_string())
-log.set_defaults()
-
-CONF(args=sys.argv[1:],
-     project='producer',
-     version=version.version_info.version_string())
-
-LOG = log.getLogger(__name__)
+cfg.CONF.register_cli_opts(cli_opts)
+cfg.CONF.register_cli_opts(producer_opts)
 
 
 def generate_task():
     random.seed()
 
-    width = random.randint(CONF.min_width, CONF.max_width)
-    height = random.randint(CONF.min_height, CONF.max_height)
-    iterations = random.randint(CONF.min_iterations, CONF.max_iterations)
-    xa = random.uniform(CONF.min_xa, CONF.max_xa)
-    xb = random.uniform(CONF.min_xb, CONF.max_xb)
-    ya = random.uniform(CONF.min_ya, CONF.max_ya)
-    yb = random.uniform(CONF.min_yb, CONF.max_yb)
+    width = random.randint(cfg.CONF.min_width, cfg.CONF.max_width)
+    height = random.randint(cfg.CONF.min_height, cfg.CONF.max_height)
+    iterations = random.randint(cfg.CONF.min_iterations,
+                                cfg.CONF.max_iterations)
+    xa = random.uniform(cfg.CONF.min_xa, cfg.CONF.max_xa)
+    xb = random.uniform(cfg.CONF.min_xb, cfg.CONF.max_xb)
+    ya = random.uniform(cfg.CONF.min_ya, cfg.CONF.max_ya)
+    yb = random.uniform(cfg.CONF.min_yb, cfg.CONF.max_yb)
 
     task = {
         'uuid': str(uuid.uuid4()),
@@ -123,47 +107,84 @@ def generate_task():
     return task
 
 
-def run(messaging, api_url):
-    while True:
+class ProducerService(service.Service, periodic_task.PeriodicTasks):
+    def __init__(self):
+        super(ProducerService, self).__init__()
+        self.messaging = kombu.Connection(cfg.CONF.amqp_url)
+        self._periodic_last_run = {}
+
+        @periodic_task.periodic_task(spacing=cfg.CONF.interval,
+                                     run_immediately=True)
+        def generate_task(self, context):
+            random.seed()
+            number = random.randint(cfg.CONF.min_tasks, cfg.CONF.max_tasks)
+            LOG.info("generating %d task(s)" % number)
+            for i in xrange(0, number):
+                task = self.get_random_task()
+                # NOTE(berendt): only necessary when using requests < 2.4.2
+                headers = {'Content-type': 'application/json',
+                           'Accept': 'text/plain'}
+                requests.post("%s/api/fractal" % cfg.CONF.api_url,
+                              json.dumps(task), headers=headers)
+                LOG.info("generated task: %s" % task)
+                with producers[self.messaging].acquire(block=True) as producer:
+                    producer.publish(
+                        task,
+                        serializer='pickle',
+                        exchange=queues.task_exchange,
+                        declare=[queues.task_exchange],
+                        routing_key='tasks')
+
+        self.add_periodic_task(generate_task)
+        self.tg.add_dynamic_timer(self.periodic_tasks)
+
+    def periodic_tasks(self):
+        """Tasks to be run at a periodic interval."""
+        return self.run_periodic_tasks(None)
+
+    @staticmethod
+    def get_random_task():
         random.seed()
-        number = random.randint(CONF.min_tasks, CONF.max_tasks)
-        LOG.info("generating %d task(s)" % number)
-        for i in xrange(0, number):
-            task = generate_task()
-            # NOTE(berendt): only necessary when using requests < 2.4.2
-            headers = {'Content-type': 'application/json',
-                       'Accept': 'text/plain'}
-            requests.post("%s/api/fractal" % api_url, json.dumps(task),
-                          headers=headers)
-            LOG.info("generated task: %s" % task)
-            with producers[messaging].acquire(block=True) as producer:
-                producer.publish(
-                    task,
-                    serializer='pickle',
-                    exchange=queues.task_exchange,
-                    declare=[queues.task_exchange],
-                    routing_key='tasks')
 
-        if CONF.one_shot:
-            break
+        width = random.randint(cfg.CONF.min_width, cfg.CONF.max_width)
+        height = random.randint(cfg.CONF.min_height, cfg.CONF.max_height)
+        iterations = random.randint(cfg.CONF.min_iterations,
+                                    cfg.CONF.max_iterations)
+        xa = random.uniform(cfg.CONF.min_xa, cfg.CONF.max_xa)
+        xb = random.uniform(cfg.CONF.min_xb, cfg.CONF.max_xb)
+        ya = random.uniform(cfg.CONF.min_ya, cfg.CONF.max_ya)
+        yb = random.uniform(cfg.CONF.min_yb, cfg.CONF.max_yb)
 
-        pause = random.uniform(CONF.min_pause, CONF.max_pause)
-        LOG.info("sleeping for %f seconds" % pause)
-        time.sleep(pause)
+        task = {
+            'uuid': str(uuid.uuid4()),
+            'width': width,
+            'height': height,
+            'iterations': iterations,
+            'xa': xa,
+            'xb': xb,
+            'ya': ya,
+            'yb': yb
+        }
+
+        return task
 
 
 def main():
-    messaging = kombu.Connection(CONF.amqp_url)
+    log.register_options(cfg.CONF)
+    log.setup(cfg.CONF, 'producer',
+              version=version.version_info.version_string())
+    log.set_defaults()
 
-    if CONF.daemonize:
-        with daemon.DaemonContext():
-            run(messaging, CONF.api_url)
+    cfg.CONF(project='producer', prog='faafo-producer',
+             version=version.version_info.version_string())
+
+    srv = ProducerService()
+
+    if cfg.CONF.one_shot:
+        srv.periodic_tasks()
     else:
-        try:
-            run(messaging, CONF.api_url)
-        except Exception as e:
-            sys.exit("ERROR: %s" % e)
-
+        launcher = service.launch(srv)
+        launcher.wait()
 
 if __name__ == '__main__':
     main()
