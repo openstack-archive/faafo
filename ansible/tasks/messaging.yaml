@@ -5,7 +5,7 @@
 - service: name=rabbitmq-server state=started enabled=yes
 - rabbitmq_user: user=guest
                  password=secretsecret
-- rabbitmq_user: user=tutorial
+- rabbitmq_user: user=faafo
                  password=secretsecret
                  vhost=/
                  configure_priv=.*

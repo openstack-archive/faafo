@@ -13,11 +13,5 @@
 - command: /root/mysql_secure_installation.sh
            creates=/root/mysql_secure_installation.done
 - copy: src=files/client.my.cnf dest=/root/.my.cnf
-- mysql_db: name=tutorial state=present
-- mysql_user: name=tutorial password=secretsecret priv=*.*:ALL host={{ item }} state=present
-  with_items:
-    - api
-    - localhost
-    - producer
-    - tracker
-    - worker
+- mysql_db: name=faafo state=present
+- mysql_user: name=faafo password=secretsecret priv=*.*:ALL host=localhost state=present
