@@ -1,6 +1,7 @@
 pbr>=0.6,!=0.7,<1.0
 anyjson>=0.3.3
 amqp
+eventlet>=0.16.1,!=0.17.0
 kombu>=2.5.0
 PyMySQL>=0.6.2  # MIT License
 Pillow==2.4.0 # MIT
