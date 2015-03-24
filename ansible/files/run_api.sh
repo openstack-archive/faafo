@@ -1,5 +1,5 @@
 #!/bin/sh
 
 faafo-api \
-    --database-url mysql://tutorial:secretsecret@service:3306/tutorial \
+    --database-url mysql://faafo:secretsecret@127.0.0.1:3306/faafo \
     --debug --verbose
