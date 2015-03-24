@@ -42,7 +42,7 @@ cli_opts = [
                default='/tmp',
                help='Target directory for fractal image files.'),
     cfg.StrOpt('amqp-url',
-               default='amqp://tutorial:secretsecret@localhost:5672/',
+               default='amqp://faafo:secretsecret@localhost:5672/',
                help='AMQP connection URL')
 ]
 

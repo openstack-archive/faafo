@@ -4,9 +4,9 @@
   tasks:
   - apt: update-cache=yes upgrade=yes
 
-  - include: tasks/database.yaml tags=database
-  - include: tasks/messaging.yaml tags=messaging
-  - include: tasks/webinterface.yaml tags=webinterface
+  - include: tasks/database.yaml
+  - include: tasks/messaging.yaml
+  - include: tasks/webinterface.yaml
 
   - apt: name={{ item }} state=latest
     with_items:
@@ -14,33 +14,13 @@
       - libmysqlclient-dev
       - python-dev
       - python-virtualenv
-    tags:
-      - api
-      - producer
-      - tracker
-      - worker
 
   - command: pip install -r /vagrant/requirements.txt
-    tags:
-      - api
-      - producer
-      - tracker
-      - worker
-
   - command: python setup.py install
     args:
       chdir: /vagrant
-    tags:
-      - api
-      - producer
-      - tracker
-      - worker
 
-  - copy: src=files/run_api.sh dest=/home/vagrant/run_api.sh mode=0755
-    tags: api
-  - copy: src=files/run_producer.sh dest=/home/vagrant/run_producer.sh mode=0755
-    tags: producer
-  - copy: src=files/run_tracker.sh dest=/home/vagrant/run_tracker.sh mode=0755
-    tags: tracker
-  - copy: src=files/run_worker.sh dest=/home/vagrant/run_worker.sh mode=0755
-    tags: worker
+  - copy: src=files/run_api.sh dest=/home/vagrant/run_api.sh mode=0755 owner=vagrant group=vagrant
+  - copy: src=files/run_producer.sh dest=/home/vagrant/run_producer.sh mode=0755 owner=vagrant group=vagrant
+  - copy: src=files/run_tracker.sh dest=/home/vagrant/run_tracker.sh mode=0755 owner=vagrant group=vagrant
+  - copy: src=files/run_worker.sh dest=/home/vagrant/run_worker.sh mode=0755 owner=vagrant group=vagrant

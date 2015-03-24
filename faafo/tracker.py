@@ -35,7 +35,7 @@ cli_opts = [
                 default=False,
                 help='Run in background.'),
     cfg.StrOpt('amqp-url',
-               default='amqp://tutorial:secretsecret@localhost:5672/',
+               default='amqp://faafo:secretsecret@localhost:5672/',
                help='AMQP connection URL'),
     cfg.StrOpt('api-url',
                default='http://localhost:5000',
