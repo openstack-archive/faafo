@@ -1,6 +1,6 @@
 #!/bin/sh
 
 faafo-worker \
-    --amqp-url amqp://tutorial:secretsecret@service:5672/ \
+    --amqp-url amqp://faafo:secretsecret@127.0.0.1:5672/ \
     --target /home/vagrant \
     --debug --verbose
