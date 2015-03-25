@@ -14,36 +14,29 @@
 
 # based on http://code.activestate.com/recipes/577120-julia-fractals/
 
+import eventlet
+eventlet.monkey_patch()
+
 import hashlib
 import os
 from PIL import Image
 import random
-import sys
+import socket
 import time
 
-import daemon
-import kombu
-from kombu.mixins import ConsumerMixin
-from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
+import oslo_messaging as messaging
 
-from faafo import queues
 from faafo import version
 
 
-LOG = log.getLogger(__name__)
+LOG = log.getLogger('faafo.worker')
 
 cli_opts = [
-    cfg.BoolOpt('daemonize',
-                default=False,
-                help='Run in background.'),
     cfg.StrOpt('target',
                default='/tmp',
                help='Target directory for fractal image files.'),
-    cfg.StrOpt('amqp-url',
-               default='amqp://faafo:secretsecret@localhost:5672/',
-               help='AMQP connection URL')
 ]
 
 cfg.CONF.register_cli_opts(cli_opts)
@@ -97,49 +90,33 @@ class JuliaSet(object):
         return (c, z)
 
 
-class Worker(ConsumerMixin):
+class WorkerEndpoint(object):
 
-    def __init__(self, url, target):
-        self.connection = kombu.Connection(url)
-        self.target = target
-
-    def get_consumers(self, Consumer, channel):
-        return [Consumer(queues=queues.task_queues,
-                         accept=['pickle', 'json'],
-                         callbacks=[self.process_task])]
-
-    def process_task(self, body, message):
-        LOG.info("processing task %s" % body['uuid'])
-        LOG.debug(body)
+    def process(self, ctxt, task):
+        LOG.info("processing task %s" % task['uuid'])
+        LOG.debug(task)
         start_time = time.time()
-        juliaset = JuliaSet(body['width'],
-                            body['height'],
-                            body['xa'],
-                            body['xb'],
-                            body['ya'],
-                            body['yb'],
-                            body['iterations'])
-        filename = os.path.join(self.target, "%s.png" % body['uuid'])
+        juliaset = JuliaSet(task['width'],
+                            task['height'],
+                            task['xa'],
+                            task['xb'],
+                            task['ya'],
+                            task['yb'],
+                            task['iterations'])
+        filename = os.path.join(cfg.CONF.target, "%s.png" % task['uuid'])
         elapsed_time = time.time() - start_time
         LOG.info("task %s processed in %f seconds" %
-                 (body['uuid'], elapsed_time))
+                 (task['uuid'], elapsed_time))
         juliaset.save(filename)
         LOG.info("saved result of task %s to file %s" %
-                 (body['uuid'], filename))
+                 (task['uuid'], filename))
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
         result = {
-            'uuid': body['uuid'],
+            'uuid': task['uuid'],
             'duration': elapsed_time,
             'checksum': checksum
         }
-        LOG.info("pushed result: %s" % result)
-        with producers[self.connection].acquire(block=True) as producer:
-            producer.publish(result, serializer='pickle',
-                             exchange=queues.result_exchange,
-                             declare=[queues.result_exchange],
-                             routing_key='results')
-
-        message.ack()
+        return result
 
 
 def main():
@@ -152,17 +129,15 @@ def main():
     log.setup(cfg.CONF, 'worker',
               version=version.version_info.version_string())
 
-    worker = Worker(cfg.CONF.amqp_url, cfg.CONF.target)
-
-    if cfg.CONF.daemonize:
-        with daemon.DaemonContext():
-            worker.run()
-    else:
-        try:
-            worker.run()
-        except Exception as e:
-            sys.exit("ERROR: %s" % e)
-
+    transport = messaging.get_transport(cfg.CONF)
+    target = messaging.Target(topic='tasks', server=socket.gethostname())
+    endpoints = [
+        WorkerEndpoint()
+    ]
+    server = messaging.get_rpc_server(transport, target, endpoints,
+                                      executor='eventlet')
+    server.start()
+    server.wait()
 
 if __name__ == '__main__':
     main()
