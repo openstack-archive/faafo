@@ -16,27 +16,19 @@ import json
 import random
 import uuid
 
-import kombu
-from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
+import oslo_messaging as messaging
 import requests
 
 from faafo.openstack.common import periodic_task
 from faafo.openstack.common import service
-from faafo import queues
 from faafo import version
 
 
 LOG = log.getLogger('faafo.producer')
 
 cli_opts = [
-    cfg.StrOpt('amqp-url',
-               default='amqp://faafo:secretsecret@localhost:5672/',
-               help='AMQP connection URL'),
-    cfg.StrOpt('api-url',
-               default='http://localhost:5000',
-               help='API connection URL')
 ]
 
 producer_opts = [
@@ -74,22 +66,27 @@ producer_opts = [
                help="The minimum number of generated tasks."),
     cfg.IntOpt("max-tasks", default=10,
                help="The maximum number of generated tasks."),
-    cfg.IntOpt("interval", default=10, help="Interval in seconds.")
+    cfg.IntOpt("interval", default=10, help="Interval in seconds."),
+    cfg.StrOpt('endpoint-url',
+               default='http://localhost:5000',
+               help='API connection URL')
 ]
 
-cfg.CONF.register_cli_opts(cli_opts)
-cfg.CONF.register_cli_opts(producer_opts)
+cfg.CONF.register_opts(producer_opts)
 
 
 class ProducerService(service.Service, periodic_task.PeriodicTasks):
     def __init__(self):
         super(ProducerService, self).__init__()
-        self.messaging = kombu.Connection(cfg.CONF.amqp_url)
         self._periodic_last_run = {}
+        transport = messaging.get_transport(cfg.CONF)
+        target = messaging.Target(topic='tasks')
+        self._client = messaging.RPCClient(transport, target)
 
         @periodic_task.periodic_task(spacing=cfg.CONF.interval,
-                                     run_immediately=True)
-        def generate_task(self, context):
+                                     run_immediately=False)
+        def generate_task(self, ctxt):
+            ctxt = {}
             random.seed()
             number = random.randint(cfg.CONF.min_tasks, cfg.CONF.max_tasks)
             LOG.info("generating %d task(s)" % number)
@@ -98,16 +95,14 @@ class ProducerService(service.Service, periodic_task.PeriodicTasks):
                 # NOTE(berendt): only necessary when using requests < 2.4.2
                 headers = {'Content-type': 'application/json',
                            'Accept': 'text/plain'}
-                requests.post("%s/api/fractal" % cfg.CONF.api_url,
+                requests.post("%s/api/fractal" % cfg.CONF.endpoint_url,
                               json.dumps(task), headers=headers)
                 LOG.info("generated task: %s" % task)
-                with producers[self.messaging].acquire(block=True) as producer:
-                    producer.publish(
-                        task,
-                        serializer='pickle',
-                        exchange=queues.task_exchange,
-                        declare=[queues.task_exchange],
-                        routing_key='tasks')
+                result = self._client.call(ctxt, 'process', task=task)
+                LOG.info("task %s processed: %s" % (task['uuid'], result))
+                requests.put("%s/api/fractal/%s" %
+                             (cfg.CONF.endpoint_url, str(task['uuid'])),
+                             json.dumps(result), headers=headers)
 
         self.add_periodic_task(generate_task)
         self.tg.add_dynamic_timer(self.periodic_tasks)
