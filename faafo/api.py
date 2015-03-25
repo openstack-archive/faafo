@@ -20,7 +20,7 @@ from faafo import version
 
 LOG = log.getLogger(__name__)
 
-cli_opts = [
+api_opts = [
     cfg.StrOpt('listen-address',
                default='0.0.0.0',
                help='Listen address.'),
@@ -32,7 +32,7 @@ cli_opts = [
                help='Database connection URL.')
 ]
 
-cfg.CONF.register_cli_opts(cli_opts)
+cfg.CONF.register_api_opts(api_opts)
 
 log.register_options(cfg.CONF)
 log.set_defaults()
