@@ -145,12 +145,13 @@ class ProducerService(service.Service, periodic_task.PeriodicTasks):
 
 def main():
     log.register_options(cfg.CONF)
-    log.setup(cfg.CONF, 'producer',
-              version=version.version_info.version_string())
     log.set_defaults()
 
     cfg.CONF(project='producer', prog='faafo-producer',
              version=version.version_info.version_string())
+
+    log.setup(cfg.CONF, 'producer',
+              version=version.version_info.version_string())
 
     srv = ProducerService()
 

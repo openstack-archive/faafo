@@ -28,7 +28,7 @@ from faafo import queues
 from faafo import version
 
 
-CONF = cfg.CONF
+LOG = log.getLogger(__name__)
 
 cli_opts = [
     cfg.BoolOpt('daemonize',
@@ -42,17 +42,7 @@ cli_opts = [
                help='API connection URL')
 ]
 
-CONF.register_cli_opts(cli_opts)
-
-log.register_options(CONF)
-log.set_defaults(default_log_levels=[])
-log.setup(CONF, 'tracker', version=version.version_info.version_string())
-
-CONF(args=sys.argv[1:],
-     project='tracker',
-     version=version.version_info.version_string())
-
-LOG = log.getLogger(__name__)
+cfg.CONF.register_cli_opts(cli_opts)
 
 
 class Tracker(ConsumerMixin):
@@ -84,9 +74,18 @@ class Tracker(ConsumerMixin):
 
 
 def main():
-    tracker = Tracker(CONF.amqp_url, CONF.api_url)
+    log.register_options(cfg.CONF)
+    log.set_defaults()
 
-    if CONF.daemonize:
+    cfg.CONF(project='tracker', prog='faafo-tracker',
+             version=version.version_info.version_string())
+
+    log.setup(cfg.CONF, 'tracker',
+              version=version.version_info.version_string())
+
+    tracker = Tracker(cfg.CONF.amqp_url, cfg.CONF.api_url)
+
+    if cfg.CONF.daemonize:
         with daemon.DaemonContext():
             tracker.run()
     else:

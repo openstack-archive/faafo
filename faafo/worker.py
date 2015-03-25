@@ -32,7 +32,7 @@ from faafo import queues
 from faafo import version
 
 
-CONF = cfg.CONF
+LOG = log.getLogger(__name__)
 
 cli_opts = [
     cfg.BoolOpt('daemonize',
@@ -46,17 +46,7 @@ cli_opts = [
                help='AMQP connection URL')
 ]
 
-CONF.register_cli_opts(cli_opts)
-
-log.register_options(CONF)
-log.setup(CONF, 'worker', version=version.version_info.version_string())
-log.set_defaults()
-
-CONF(args=sys.argv[1:],
-     project='worker',
-     version=version.version_info.version_string())
-
-LOG = log.getLogger(__name__)
+cfg.CONF.register_cli_opts(cli_opts)
 
 
 class JuliaSet(object):
@@ -153,9 +143,18 @@ class Worker(ConsumerMixin):
 
 
 def main():
-    worker = Worker(CONF.amqp_url, CONF.target)
+    log.register_options(cfg.CONF)
+    log.set_defaults()
 
-    if CONF.daemonize:
+    cfg.CONF(project='worker', prog='faafo-worker',
+             version=version.version_info.version_string())
+
+    log.setup(cfg.CONF, 'worker',
+              version=version.version_info.version_string())
+
+    worker = Worker(cfg.CONF.amqp_url, cfg.CONF.target)
+
+    if cfg.CONF.daemonize:
         with daemon.DaemonContext():
             worker.run()
     else:
