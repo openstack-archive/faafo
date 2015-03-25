@@ -10,8 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import sys
-
 import flask
 import flask.ext.restless
 import flask.ext.sqlalchemy
@@ -20,7 +18,7 @@ from oslo_log import log
 
 from faafo import version
 
-CONF = cfg.CONF
+LOG = log.getLogger(__name__)
 
 cli_opts = [
     cfg.StrOpt('listen-address',
@@ -34,21 +32,20 @@ cli_opts = [
                help='Database connection URL.')
 ]
 
-CONF.register_cli_opts(cli_opts)
+cfg.CONF.register_cli_opts(cli_opts)
 
-log.register_options(CONF)
+log.register_options(cfg.CONF)
 log.set_defaults()
-log.setup(CONF, 'api', version=version.version_info.version_string())
 
-CONF(args=sys.argv[1:],
-     project='api',
-     version=version.version_info.version_string())
+cfg.CONF(project='api', prog='faafo-api',
+         version=version.version_info.version_string())
 
-LOG = log.getLogger(__name__)
+log.setup(cfg.CONF, 'api',
+          version=version.version_info.version_string())
 
 app = flask.Flask(__name__)
-app.config['DEBUG'] = CONF.debug
-app.config['SQLALCHEMY_DATABASE_URI'] = CONF.database_url
+app.config['DEBUG'] = cfg.CONF.debug
+app.config['SQLALCHEMY_DATABASE_URI'] = cfg.CONF.database_url
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
 
 
@@ -74,7 +71,7 @@ manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 
 def main():
     manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'])
-    app.run(host=CONF.listen_address, port=CONF.bind_port)
+    app.run(host=cfg.CONF.listen_address, port=cfg.CONF.bind_port)
 
 if __name__ == '__main__':
     main()
