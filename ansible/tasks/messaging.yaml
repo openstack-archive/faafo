@@ -3,8 +3,6 @@
   with_items:
     - rabbitmq-server
 - service: name=rabbitmq-server state=started enabled=yes
-- rabbitmq_user: user=guest
-                 password=secretsecret
 - rabbitmq_user: user=faafo
                  password=secretsecret
                  vhost=/
@@ -13,3 +11,4 @@
                  write_priv=.*
                  state=present
 - rabbitmq_plugin: names=rabbitmq_management state=enabled
+- service: name=rabbitmq-server state=restarted
