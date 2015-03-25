@@ -20,7 +20,10 @@
     args:
       chdir: /vagrant
 
-  - copy: src=files/run_api.sh dest=/home/vagrant/run_api.sh mode=0755 owner=vagrant group=vagrant
-  - copy: src=files/run_producer.sh dest=/home/vagrant/run_producer.sh mode=0755 owner=vagrant group=vagrant
-  - copy: src=files/run_tracker.sh dest=/home/vagrant/run_tracker.sh mode=0755 owner=vagrant group=vagrant
-  - copy: src=files/run_worker.sh dest=/home/vagrant/run_worker.sh mode=0755 owner=vagrant group=vagrant
+  - copy: src=files/{{ item }} dest=/home/vagrant/{{ item }} mode=0755 owner=vagrant group=vagrant
+    with_items:
+      - run_api.sh
+      - run_producer.sh
+      - run_worker.sh
+      - producer.conf
+      - worker.conf
