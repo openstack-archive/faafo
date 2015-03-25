@@ -18,9 +18,9 @@ from oslo_log import log
 
 from faafo import version
 
-LOG = log.getLogger(__name__)
+LOG = log.getLogger('faafo.api')
 
-cli_opts = [
+api_opts = [
     cfg.StrOpt('listen-address',
                default='0.0.0.0',
                help='Listen address.'),
@@ -32,7 +32,7 @@ cli_opts = [
                help='Database connection URL.')
 ]
 
-cfg.CONF.register_cli_opts(cli_opts)
+cfg.CONF.register_opts(api_opts)
 
 log.register_options(cfg.CONF)
 log.set_defaults()
@@ -43,7 +43,7 @@ cfg.CONF(project='api', prog='faafo-api',
 log.setup(cfg.CONF, 'api',
           version=version.version_info.version_string())
 
-app = flask.Flask(__name__)
+app = flask.Flask('faafo.api')
 app.config['DEBUG'] = cfg.CONF.debug
 app.config['SQLALCHEMY_DATABASE_URI'] = cfg.CONF.database_url
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
