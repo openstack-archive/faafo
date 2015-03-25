@@ -16,24 +16,19 @@ import json
 import random
 import uuid
 
-import kombu
-from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
+import oslo_messaging as messaging
 import requests
 
 from faafo.openstack.common import periodic_task
 from faafo.openstack.common import service
-from faafo import queues
 from faafo import version
 
 
 LOG = log.getLogger('faafo.producer')
 
 cli_opts = [
-    cfg.StrOpt('amqp-url',
-               default='amqp://faafo:secretsecret@localhost:5672/',
-               help='AMQP connection URL'),
     cfg.StrOpt('api-url',
                default='http://localhost:5000',
                help='API connection URL')
@@ -84,12 +79,15 @@ cfg.CONF.register_cli_opts(producer_opts)
 class ProducerService(service.Service, periodic_task.PeriodicTasks):
     def __init__(self):
         super(ProducerService, self).__init__()
-        self.messaging = kombu.Connection(cfg.CONF.amqp_url)
         self._periodic_last_run = {}
+        transport = messaging.get_transport(cfg.CONF)
+        target = messaging.Target(topic='tasks', version='2.0')
+        self._client = messaging.RPCClient(transport, target)
 
         @periodic_task.periodic_task(spacing=cfg.CONF.interval,
                                      run_immediately=True)
-        def generate_task(self, context):
+        def generate_task(self, ctxt):
+            ctxt = {}
             random.seed()
             number = random.randint(cfg.CONF.min_tasks, cfg.CONF.max_tasks)
             LOG.info("generating %d task(s)" % number)
@@ -101,13 +99,7 @@ class ProducerService(service.Service, periodic_task.PeriodicTasks):
                 requests.post("%s/api/fractal" % cfg.CONF.api_url,
                               json.dumps(task), headers=headers)
                 LOG.info("generated task: %s" % task)
-                with producers[self.messaging].acquire(block=True) as producer:
-                    producer.publish(
-                        task,
-                        serializer='pickle',
-                        exchange=queues.task_exchange,
-                        declare=[queues.task_exchange],
-                        routing_key='tasks')
+                self._client.call(ctxt, 'create', task=task)
 
         self.add_periodic_task(generate_task)
         self.tg.add_dynamic_timer(self.periodic_tasks)
