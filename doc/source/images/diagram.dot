@@ -4,12 +4,12 @@ digraph {
   Database -> API [color=red];
   API -> Webinterface [color=red];
   Producer -> API [color=orange];
+  Producer -> API [color=green];
   Producer -> "Queue Service" [color=orange];
-  Tracker -> API [color=green];
-  "Queue Service" -> Tracker [color=green];
   "Queue Service" -> Worker [color=orange];
   Worker -> "Image File" [color=blue];
   Worker -> "Queue Service" [color=green];
+  "Queue Service" -> Producer [color=green];
   "Image File" -> "Storage Backend" [color=blue];
   "Storage Backend" -> Webinterface [color=red];
 }

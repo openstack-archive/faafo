@@ -27,12 +27,11 @@ Now it is possible to login with SSH.
 
     $ vagrant ssh
 
-Open a new screen or tmux session. Aftwards run the api, worker, producer, and
-tracker services in the foreground, each service in a separate window.
+Open a new screen or tmux session. Aftwards run the api, worker, and producer
+services in the foreground, each service in a separate window.
 
 * :code:`sh run_api.sh`
 * :code:`sh run_producer.sh`
-* :code:`sh run_tracker.sh`
 * :code:`sh run_worker.sh`
 
 RabbitMQ server
@@ -60,12 +59,11 @@ the application itself.
     $ pip install -r requirements.txt
     $ python setup.py install
 
-Open a new screen or tmux session. Aftwards run the api, worker, producer, and
-tracker services in the foreground, each service in a separate window.
+Open a new screen or tmux session. Aftwards run the api, worker, and producer
+services in the foreground, each service in a separate window.
 
 .. code::
 
     $ source .venv/bin/activate; faafo-api
     $ source .venv/bin/activate; faafo-worker
-    $ source .venv/bin/activate; faafo-tracker
     $ source .venv/bin/activate; faafo-producer
