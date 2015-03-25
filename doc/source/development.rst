@@ -39,7 +39,7 @@ RabbitMQ server
 ~~~~~~~~~~~~~~~
 
 The webinterface of the RabbitMQ server is reachable on TCP port :code:`15672`. The login is
-possible with the user :code:`guest` and the password :code:`secretsecret`.
+possible with the user :code:`guest` and the password :code:`guest`.
 
 MySQL server
 ~~~~~~~~~~~~
