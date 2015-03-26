@@ -22,9 +22,11 @@
 
   - copy: src=files/{{ item }} dest=/home/vagrant/{{ item }} mode=0755 owner=vagrant group=vagrant
     with_items:
-      - api.conf
-      - producer.conf
       - run_api.sh
       - run_producer.sh
       - run_worker.sh
+
+  - copy: src=files/{{ item }} dest=/home/vagrant/{{ item }} mode=0644 owner=vagrant group=vagrant
+      - api.conf
+      - producer.conf
       - worker.conf
