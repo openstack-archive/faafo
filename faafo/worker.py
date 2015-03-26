@@ -22,8 +22,10 @@ import os
 from PIL import Image
 import random
 import socket
+import tempfile
 import time
 
+import glance_store
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging as messaging
@@ -32,15 +34,6 @@ from faafo import version
 
 
 LOG = log.getLogger('faafo.worker')
-
-worker_opts = [
-    cfg.StrOpt('filesystem_store_datadir',
-               default='/tmp',
-               help='Directory that the filesystem backend store writes '
-                    'fractal image files to.'),
-]
-
-cfg.CONF.register_opts(worker_opts)
 
 
 class JuliaSet(object):
@@ -71,8 +64,10 @@ class JuliaSet(object):
                 self.image.putpixel((x, y),
                                     (i % 8 * 32, i % 16 * 16, i % 32 * 8))
 
-    def save(self, filename):
-        self.image.save(filename, "PNG")
+    def get_file(self):
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            self.image.save(fp, "PNG")
+            return fp.name
 
     def _set_point(self):
         random.seed()
@@ -104,26 +99,34 @@ class WorkerEndpoint(object):
                             task['ya'],
                             task['yb'],
                             task['iterations'])
-        filename = os.path.join(cfg.CONF.filesystem_store_datadir,
-                                "%s.png" % task['uuid'])
         elapsed_time = time.time() - start_time
         LOG.info("task %s processed in %f seconds" %
                  (task['uuid'], elapsed_time))
-        juliaset.save(filename)
-        LOG.info("saved result of task %s to file %s" %
-                 (task['uuid'], filename))
+
+        filename = juliaset.get_file()
+        LOG.debug("saved result of task %s to temporary file %s" %
+                  (task['uuid'], filename))
+        with open(filename, 'rb') as fp:
+            size = os.fstat(fp.fileno()).st_size
+            glance_store.add_to_backend(cfg.CONF, task['uuid'], fp, size)
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
+        LOG.debug("checksum for task %s: %s" % (task['uuid'], checksum))
+        os.remove(filename)
+
         result = {
             'uuid': task['uuid'],
             'duration': elapsed_time,
             'checksum': checksum
         }
+
         return result
 
 
 def main():
     log.register_options(cfg.CONF)
     log.set_defaults()
+
+    glance_store.register_opts(cfg.CONF)
 
     cfg.CONF(project='worker', prog='faafo-worker',
              version=version.version_info.version_string())
@@ -138,6 +141,10 @@ def main():
     ]
     server = messaging.get_rpc_server(transport, target, endpoints,
                                       executor='eventlet')
+
+    glance_store.create_stores(cfg.CONF)
+    glance_store.verify_default_store()
+
     server.start()
     try:
         server.wait()
