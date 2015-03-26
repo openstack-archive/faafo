@@ -29,5 +29,6 @@
   - copy: src=files/{{ item }} dest=/home/vagrant/{{ item }} mode=0644 owner=vagrant group=vagrant
     with_items:
       - api.conf
+      - faafo.conf
       - producer.conf
       - worker.conf
