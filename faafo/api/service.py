@@ -10,15 +10,21 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
+
 import flask
 import flask.ext.restless
 import flask.ext.sqlalchemy
+from flask_bootstrap import Bootstrap
+import glance_store
 from oslo_config import cfg
 from oslo_log import log
 
 from faafo import version
 
 LOG = log.getLogger('faafo.api')
+CONF = cfg.CONF
+glance_store.register_opts(CONF)
 
 api_opts = [
     cfg.StrOpt('listen-address',
@@ -32,27 +38,35 @@ api_opts = [
                help='Database connection URL.')
 ]
 
-cfg.CONF.register_opts(api_opts)
+CONF.register_opts(api_opts)
 
-log.register_options(cfg.CONF)
+log.register_options(CONF)
 log.set_defaults()
 
-cfg.CONF(project='api', prog='faafo-api',
-         version=version.version_info.version_string())
+CONF(project='api', prog='faafo-api',
+     version=version.version_info.version_string())
 
-log.setup(cfg.CONF, 'api',
+log.setup(CONF, 'api',
           version=version.version_info.version_string())
 
-app = flask.Flask('faafo.api')
-app.config['DEBUG'] = cfg.CONF.debug
-app.config['SQLALCHEMY_DATABASE_URI'] = cfg.CONF.database_url
+template_folder = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'templates')
+app = flask.Flask('faafo.api', template_folder=template_folder)
+app.config['DEBUG'] = CONF.debug
+app.config['SQLALCHEMY_DATABASE_URI'] = CONF.database_url
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
+Bootstrap(app)
+
+glance_store.create_stores(CONF)
+glance_store.verify_default_store()
 
 
 class Fractal(db.Model):
     uuid = db.Column(db.String(36), primary_key=True)
     checksum = db.Column(db.String(256), unique=True)
+    url = db.Column(db.String(256), nullable=True)
     duration = db.Column(db.Float)
+    size = db.Column(db.Integer, nullable=True)
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
     iterations = db.Column(db.Integer, nullable=False)
@@ -69,9 +83,19 @@ db.create_all()
 manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 
 
+@app.route('/', methods=['GET'])
+@app.route('/index', methods=['GET'])
+@app.route('/index/<int:page>', methods=['GET'])
+def index(page=1):
+    fractals = Fractal.query.filter(
+        Fractal.checksum is not None).paginate(page, 10, error_out=False)
+    return flask.render_template('index.html', fractals=fractals)
+
+
 def main():
-    manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'])
-    app.run(host=cfg.CONF.listen_address, port=cfg.CONF.bind_port)
+    manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'],
+                       url_prefix='/v1')
+    app.run(host=CONF.listen_address, port=CONF.bind_port)
 
 if __name__ == '__main__':
     main()

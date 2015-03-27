@@ -1,0 +1,57 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}First App Appliation for OpenStack{% endblock %}
+{% from "bootstrap/pagination.html" import render_pagination %}
+
+{% block content %}
+
+{% for fractal in fractals.items %}
+<div class="row">
+  <div class="col-xs-4 col-md-2">
+    <a href="/fractal/{{ fractal.uuid }}" class="thumbnail">
+      <img src="https://raw.githubusercontent.com/stackforge/faafo/master/doc/source/images/example.png">
+    </a>
+  </div>
+  <div class="col-xs-8 col-md-4">
+    <table class="table table-striped">
+      <tbody>
+        <tr>
+          <td>UUID</td>
+          <td>{{ fractal.uuid }}</td>
+        </tr>
+        <tr>
+          <td>Duration</td>
+          <td>{{ fractal.duration }} seconds</td>
+        </tr>
+        <tr>
+          <td>Dimensions</td>
+          <td>{{ fractal.width }} x {{ fractal.height }} px</td>
+        </tr>
+        <tr>
+          <td>Iterations</td>
+          <td>{{ fractal.iterations }}</td>
+        </tr>
+        <tr>
+          <td>Parameters</td>
+          <td>
+            <pre>xa = {{ fractal.xa }}
+xb = {{ fractal.xb }}
+ya = {{ fractal.ya }}
+yb = {{ fractal.yb }}</pre>
+          </td>
+        </tr>
+        <tr>
+          <td>Filesize</td>
+          <td>{{ fractal.size}} bytes</td>
+        </tr>
+        <tr>
+          <td>Checksum</td>
+          <td><pre>{{ fractal.checksum }}</pre></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+{{render_pagination(fractals)}}
+{% endblock %}
