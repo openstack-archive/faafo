@@ -9,3 +9,6 @@
 build
 *.log
 *.png
+AUTHORS
+ChangeLog
+dist
