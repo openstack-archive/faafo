@@ -34,6 +34,8 @@ from faafo import version
 
 
 LOG = log.getLogger('faafo.worker')
+CONF = cfg.CONF
+glance_store.register_opts(CONF)
 
 
 class JuliaSet(object):
@@ -108,7 +110,7 @@ class WorkerEndpoint(object):
                   (task['uuid'], filename))
         with open(filename, 'rb') as fp:
             size = os.fstat(fp.fileno()).st_size
-            glance_store.add_to_backend(cfg.CONF, task['uuid'], fp, size)
+            glance_store.add_to_backend(CONF, task['uuid'], fp, size)
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
         LOG.debug("checksum for task %s: %s" % (task['uuid'], checksum))
         os.remove(filename)
@@ -122,19 +124,8 @@ class WorkerEndpoint(object):
         return result
 
 
-def main():
-    log.register_options(cfg.CONF)
-    log.set_defaults()
-
-    glance_store.register_opts(cfg.CONF)
-
-    cfg.CONF(project='worker', prog='faafo-worker',
-             version=version.version_info.version_string())
-
-    log.setup(cfg.CONF, 'worker',
-              version=version.version_info.version_string())
-
-    transport = messaging.get_transport(cfg.CONF)
+def get_server():
+    transport = messaging.get_transport(CONF)
     target = messaging.Target(topic='tasks', server=socket.gethostname())
     endpoints = [
         WorkerEndpoint()
@@ -142,15 +133,7 @@ def main():
     server = messaging.get_rpc_server(transport, target, endpoints,
                                       executor='eventlet')
 
-    glance_store.create_stores(cfg.CONF)
+    glance_store.create_stores(CONF)
     glance_store.verify_default_store()
 
-    server.start()
-    try:
-        server.wait()
-    except KeyboardInterrupt:
-        LOG.info("Caught keyboard interrupt. Exiting.")
-
-
-if __name__ == '__main__':
-    main()
+    return server

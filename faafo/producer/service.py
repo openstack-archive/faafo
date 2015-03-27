@@ -27,9 +27,7 @@ from faafo import version
 
 
 LOG = log.getLogger('faafo.producer')
-
-cli_opts = [
-]
+CONF = cfg.CONF
 
 producer_opts = [
     cfg.BoolOpt("one-shot", default=False,
@@ -72,36 +70,36 @@ producer_opts = [
                help='API connection URL')
 ]
 
-cfg.CONF.register_opts(producer_opts)
+CONF.register_opts(producer_opts)
 
 
 class ProducerService(service.Service, periodic_task.PeriodicTasks):
     def __init__(self):
         super(ProducerService, self).__init__()
         self._periodic_last_run = {}
-        transport = messaging.get_transport(cfg.CONF)
+        transport = messaging.get_transport(CONF)
         target = messaging.Target(topic='tasks')
         self._client = messaging.RPCClient(transport, target)
 
-        @periodic_task.periodic_task(spacing=cfg.CONF.interval,
+        @periodic_task.periodic_task(spacing=CONF.interval,
                                      run_immediately=False)
         def generate_task(self, ctxt):
             ctxt = {}
             random.seed()
-            number = random.randint(cfg.CONF.min_tasks, cfg.CONF.max_tasks)
+            number = random.randint(CONF.min_tasks, CONF.max_tasks)
             LOG.info("generating %d task(s)" % number)
             for i in xrange(0, number):
                 task = self.get_random_task()
                 # NOTE(berendt): only necessary when using requests < 2.4.2
                 headers = {'Content-type': 'application/json',
                            'Accept': 'text/plain'}
-                requests.post("%s/api/fractal" % cfg.CONF.endpoint_url,
+                requests.post("%s/api/fractal" % CONF.endpoint_url,
                               json.dumps(task), headers=headers)
                 LOG.info("generated task: %s" % task)
                 result = self._client.call(ctxt, 'process', task=task)
                 LOG.info("task %s processed: %s" % (task['uuid'], result))
                 requests.put("%s/api/fractal/%s" %
-                             (cfg.CONF.endpoint_url, str(task['uuid'])),
+                             (CONF.endpoint_url, str(task['uuid'])),
                              json.dumps(result), headers=headers)
 
         self.add_periodic_task(generate_task)
@@ -115,14 +113,14 @@ class ProducerService(service.Service, periodic_task.PeriodicTasks):
     def get_random_task():
         random.seed()
 
-        width = random.randint(cfg.CONF.min_width, cfg.CONF.max_width)
-        height = random.randint(cfg.CONF.min_height, cfg.CONF.max_height)
-        iterations = random.randint(cfg.CONF.min_iterations,
-                                    cfg.CONF.max_iterations)
-        xa = random.uniform(cfg.CONF.min_xa, cfg.CONF.max_xa)
-        xb = random.uniform(cfg.CONF.min_xb, cfg.CONF.max_xb)
-        ya = random.uniform(cfg.CONF.min_ya, cfg.CONF.max_ya)
-        yb = random.uniform(cfg.CONF.min_yb, cfg.CONF.max_yb)
+        width = random.randint(CONF.min_width, CONF.max_width)
+        height = random.randint(CONF.min_height, CONF.max_height)
+        iterations = random.randint(CONF.min_iterations,
+                                    CONF.max_iterations)
+        xa = random.uniform(CONF.min_xa, CONF.max_xa)
+        xb = random.uniform(CONF.min_xb, CONF.max_xb)
+        ya = random.uniform(CONF.min_ya, CONF.max_ya)
+        yb = random.uniform(CONF.min_yb, CONF.max_yb)
 
         task = {
             'uuid': str(uuid.uuid4()),
@@ -136,25 +134,3 @@ class ProducerService(service.Service, periodic_task.PeriodicTasks):
         }
 
         return task
-
-
-def main():
-    log.register_options(cfg.CONF)
-    log.set_defaults()
-
-    cfg.CONF(project='producer', prog='faafo-producer',
-             version=version.version_info.version_string())
-
-    log.setup(cfg.CONF, 'producer',
-              version=version.version_info.version_string())
-
-    srv = ProducerService()
-
-    if cfg.CONF.one_shot:
-        srv.periodic_tasks()
-    else:
-        launcher = service.launch(srv)
-        launcher.wait()
-
-if __name__ == '__main__':
-    main()
