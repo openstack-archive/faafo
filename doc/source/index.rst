@@ -8,6 +8,7 @@ Contents:
 
   workflow
   implementation
+  installation
   usage
   development
   references
