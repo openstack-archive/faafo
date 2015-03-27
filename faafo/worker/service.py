@@ -108,7 +108,7 @@ class WorkerEndpoint(object):
                   (task['uuid'], filename))
         with open(filename, 'rb') as fp:
             size = os.fstat(fp.fileno()).st_size
-            glance_store.add_to_backend(CONF, task['uuid'], fp, size)
+            glance = glance_store.add_to_backend(CONF, task['uuid'], fp, size)
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
         LOG.debug("checksum for task %s: %s" % (task['uuid'], checksum))
         os.remove(filename)
@@ -116,7 +116,9 @@ class WorkerEndpoint(object):
         result = {
             'uuid': task['uuid'],
             'duration': elapsed_time,
-            'checksum': checksum
+            'checksum': checksum,
+            'url': glance[0],
+            'size': glance[1]
         }
 
         return result

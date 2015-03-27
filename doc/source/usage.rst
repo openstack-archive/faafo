@@ -35,3 +35,8 @@ API Service
 
   2015-03-25 23:01:29.342 22511 INFO werkzeug [-] 127.0.0.1 - - [25/Mar/2015 23:01:29] "POST /api/fractal HTTP/1.1" 201 -
   2015-03-25 23:01:30.317 22511 INFO werkzeug [-] 127.0.0.1 - - [25/Mar/2015 23:01:30] "PUT /api/fractal/212e8c23-e67f-4bd3-86e1-5a5e811ee2f4 HTTP/1.1" 200 -
+
+Example webinterface view
+=========================
+
+.. image:: images/screenshot_webinterface.png
