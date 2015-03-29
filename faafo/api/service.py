@@ -10,7 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import copy
 from pkg_resources import resource_filename
 
 import flask
@@ -18,52 +17,15 @@ import flask.ext.restless
 import flask.ext.sqlalchemy
 from flask_bootstrap import Bootstrap
 import glance_store
-from oslo_config import cfg
-from oslo_log import log
-
-from faafo import version
-
-LOG = log.getLogger('faafo.api')
-CONF = cfg.CONF
-glance_store.register_opts(CONF)
-
-api_opts = [
-    cfg.StrOpt('listen-address',
-               default='0.0.0.0',
-               help='Listen address.'),
-    cfg.IntOpt('bind-port',
-               default='5000',
-               help='Bind port.'),
-    cfg.StrOpt('database-url',
-               default='sqlite:////tmp/sqlite.db',
-               help='Database connection URL.')
-]
-
-CONF.register_opts(api_opts)
-
-log.register_options(CONF)
-log.set_defaults()
-
-CONF(project='api', prog='faafo-api',
-     version=version.version_info.version_string())
-
-log.setup(CONF, 'api',
-          version=version.version_info.version_string())
 
 template_path = resource_filename(__name__, "templates")
 app = flask.Flask('faafo.api', template_folder=template_path)
-app.config['DEBUG'] = CONF.debug
-app.config['SQLALCHEMY_DATABASE_URI'] = CONF.database_url
+app.config.from_pyfile('settings.cfg', silent=False)
+app.config['SQLALCHEMY_DATABASE_URI'] = app.config['DATABASE_URL']
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
 Bootstrap(app)
-
 glance_store.create_stores(CONF)
 glance_store.verify_default_store()
-
-
-def list_opts():
-    """Entry point for oslo-config-generator."""
-    return [(None, copy.deepcopy(api_opts))]
 
 
 class Fractal(db.Model):
@@ -116,7 +78,7 @@ def get_fractal(fractalid):
 def main():
     manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'],
                        url_prefix='/v1')
-    app.run(host=CONF.listen_address, port=CONF.bind_port)
+    app.run(host=app.config['LISTEN_ADDRESS'], port=app.config['BIND_PORT'])
 
 if __name__ == '__main__':
     main()
