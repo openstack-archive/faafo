@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import copy
+
 import flask
 import flask.ext.restless
 import flask.ext.sqlalchemy
@@ -47,6 +49,11 @@ app = flask.Flask('faafo.api')
 app.config['DEBUG'] = cfg.CONF.debug
 app.config['SQLALCHEMY_DATABASE_URI'] = cfg.CONF.database_url
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
+
+
+def list_opts():
+    """Entry point for oslo-config-generator."""
+    return [(None, copy.deepcopy(api_opts))]
 
 
 class Fractal(db.Model):
