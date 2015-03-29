@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import copy
 import json
 import random
 import uuid
@@ -70,6 +71,11 @@ producer_opts = [
 ]
 
 CONF.register_opts(producer_opts)
+
+
+def list_opts():
+    """Entry point for oslo-config-generator."""
+    return [(None, copy.deepcopy(producer_opts))]
 
 
 class ProducerService(service.Service, periodic_task.PeriodicTasks):
