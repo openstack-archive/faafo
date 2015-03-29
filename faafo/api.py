@@ -10,50 +10,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import copy
-
 import flask
 import flask.ext.restless
 import flask.ext.sqlalchemy
-from oslo_config import cfg
-from oslo_log import log
-
-from faafo import version
-
-LOG = log.getLogger('faafo.api')
-
-api_opts = [
-    cfg.StrOpt('listen-address',
-               default='0.0.0.0',
-               help='Listen address.'),
-    cfg.IntOpt('bind-port',
-               default='5000',
-               help='Bind port.'),
-    cfg.StrOpt('database-url',
-               default='sqlite:////tmp/sqlite.db',
-               help='Database connection URL.')
-]
-
-cfg.CONF.register_opts(api_opts)
-
-log.register_options(cfg.CONF)
-log.set_defaults()
-
-cfg.CONF(project='api', prog='faafo-api',
-         version=version.version_info.version_string())
-
-log.setup(cfg.CONF, 'api',
-          version=version.version_info.version_string())
 
 app = flask.Flask('faafo.api')
-app.config['DEBUG'] = cfg.CONF.debug
-app.config['SQLALCHEMY_DATABASE_URI'] = cfg.CONF.database_url
+app.config.from_pyfile('settings.cfg', silent=False)
+app.config['SQLALCHEMY_DATABASE_URI'] = app.config['DATABASE_URL']
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
-
-
-def list_opts():
-    """Entry point for oslo-config-generator."""
-    return [(None, copy.deepcopy(api_opts))]
 
 
 class Fractal(db.Model):
@@ -78,7 +42,7 @@ manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 
 def main():
     manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'])
-    app.run(host=cfg.CONF.listen_address, port=cfg.CONF.bind_port)
+    app.run(host=app.config['LISTEN_ADDRESS'], port=app.config['BIND_PORT'])
 
 if __name__ == '__main__':
     main()
