@@ -126,42 +126,54 @@
 # From glance.store
 #
 
-# The host where the S3 server is listening. (string value)
-#s3_store_host = <None>
+# Directory to which the Filesystem backend store writes images.
+# (string value)
+# Deprecated group/name - [DEFAULT]/filesystem_store_datadir
+#filesystem_store_datadir = <None>
 
-# The S3 query token access key. (string value)
-#s3_store_access_key = <None>
+# List of directories and its priorities to which the Filesystem
+# backend store writes images. (multi valued)
+# Deprecated group/name - [DEFAULT]/filesystem_store_datadirs
+#filesystem_store_datadirs =
 
-# The S3 query token secret key. (string value)
-#s3_store_secret_key = <None>
+# The path to a file which contains the metadata to be returned with
+# any location associated with this store.  The file must contain a
+# valid JSON object. The object should contain the keys 'id' and
+# 'mountpoint'. The value for both keys should be 'string'. (string
+# value)
+# Deprecated group/name - [DEFAULT]/filesystem_store_metadata_file
+#filesystem_store_metadata_file = <None>
 
-# The S3 bucket to be used to store the Glance data. (string value)
-#s3_store_bucket = <None>
+# The required permission for created image file. In this way the user
+# other service used, e.g. Nova, who consumes the image could be the
+# exclusive member of the group that owns the files created. Assigning
+# it less then or equal to zero means don't change the default
+# permission of the file. This value will be decoded as an octal
+# digit. (integer value)
+# Deprecated group/name - [DEFAULT]/filesystem_store_file_perm
+#filesystem_store_file_perm = 0
 
-# The local directory where uploads will be staged before they are
-# transferred into S3. (string value)
-#s3_store_object_buffer_dir = <None>
+# Info to match when looking for cinder in the service catalog. Format
+# is : separated values of the form:
+# <service_type>:<service_name>:<endpoint_type> (string value)
+#cinder_catalog_info = volume:cinder:publicURL
 
-# A boolean to determine if the S3 bucket should be created on upload
-# if it does not exist or if an error should be returned to the user.
-# (boolean value)
-#s3_store_create_bucket_on_put = false
+# Override service catalog lookup with template for cinder endpoint
+# e.g. http://localhost:8776/v1/%(project_id)s (string value)
+#cinder_endpoint_template = <None>
 
-# The S3 calling format used to determine the bucket. Either subdomain
-# or path can be used. (string value)
-#s3_store_bucket_url_format = subdomain
+# Region name of this node (string value)
+#os_region_name = <None>
 
-# What size, in MB, should S3 start chunking image files and do a
-# multipart upload in S3. (integer value)
-#s3_store_large_object_size = 100
+# Location of ca certicates file to use for cinder client requests.
+# (string value)
+#cinder_ca_certificates_file = <None>
 
-# What multipart upload part size, in MB, should S3 use when uploading
-# parts. The size must be greater than or equal to 5M. (integer value)
-#s3_store_large_object_chunk_size = 10
+# Number of cinderclient retries on failed http calls (integer value)
+#cinder_http_retries = 3
 
-# The number of thread pools to perform a multipart upload in S3.
-# (integer value)
-#s3_store_thread_pools = 10
+# Allow to perform insecure SSL requests to cinder (boolean value)
+#cinder_api_insecure = false
 
 # Version of the authentication service to use. Valid versions are 2
 # for keystone and 1 for swauth and rackspace. (deprecated) (string
@@ -261,56 +273,6 @@
 # The config file that has the swift account(s)configs. (string value)
 #swift_store_config_file = <None>
 
-# RADOS images will be chunked into objects of this size (in
-# megabytes). For best performance, this should be a power of two.
-# (integer value)
-#rbd_store_chunk_size = 8
-
-# RADOS pool in which images are stored. (string value)
-#rbd_store_pool = images
-
-# RADOS user to authenticate as (only applicable if using Cephx. If
-# <None>, a default will be chosen based on the client. section in
-# rbd_store_ceph_conf) (string value)
-#rbd_store_user = <None>
-
-# Ceph configuration file path. If <None>, librados will locate the
-# default config. If using cephx authentication, this file should
-# include a reference to the right keyring in a client.<USER> section
-# (string value)
-#rbd_store_ceph_conf = /etc/ceph/ceph.conf
-
-# Info to match when looking for cinder in the service catalog. Format
-# is : separated values of the form:
-# <service_type>:<service_name>:<endpoint_type> (string value)
-#cinder_catalog_info = volume:cinder:publicURL
-
-# Override service catalog lookup with template for cinder endpoint
-# e.g. http://localhost:8776/v1/%(project_id)s (string value)
-#cinder_endpoint_template = <None>
-
-# Region name of this node (string value)
-#os_region_name = <None>
-
-# Location of ca certicates file to use for cinder client requests.
-# (string value)
-#cinder_ca_certificates_file = <None>
-
-# Number of cinderclient retries on failed http calls (integer value)
-#cinder_http_retries = 3
-
-# Allow to perform insecure SSL requests to cinder (boolean value)
-#cinder_api_insecure = false
-
-# Hostname or IP address of the instance to connect to, or a mongodb
-# URI, or a list of hostnames / mongodb URIs. If host is an IPv6
-# literal it must be enclosed in '[' and ']' characters following the
-# RFC2732 URL syntax (e.g. '[::1]' for localhost) (string value)
-#mongodb_store_uri = <None>
-
-# Database to use (string value)
-#mongodb_store_db = <None>
-
 # ESX/ESXi or vCenter Server target system. The server value can be an
 # IP address or a DNS name. (string value)
 #vmware_server_host = <None>
@@ -366,28 +328,33 @@
 # valued)
 #vmware_datastores =
 
-# Directory to which the Filesystem backend store writes images.
+# RADOS images will be chunked into objects of this size (in
+# megabytes). For best performance, this should be a power of two.
+# (integer value)
+#rbd_store_chunk_size = 8
+
+# RADOS pool in which images are stored. (string value)
+#rbd_store_pool = images
+
+# RADOS user to authenticate as (only applicable if using Cephx. If
+# <None>, a default will be chosen based on the client. section in
+# rbd_store_ceph_conf) (string value)
+#rbd_store_user = <None>
+
+# Ceph configuration file path. If <None>, librados will locate the
+# default config. If using cephx authentication, this file should
+# include a reference to the right keyring in a client.<USER> section
 # (string value)
-#filesystem_store_datadir = <None>
+#rbd_store_ceph_conf = /etc/ceph/ceph.conf
 
-# List of directories and its priorities to which the Filesystem
-# backend store writes images. (multi valued)
-#filesystem_store_datadirs =
+# Hostname or IP address of the instance to connect to, or a mongodb
+# URI, or a list of hostnames / mongodb URIs. If host is an IPv6
+# literal it must be enclosed in '[' and ']' characters following the
+# RFC2732 URL syntax (e.g. '[::1]' for localhost) (string value)
+#mongodb_store_uri = <None>
 
-# The path to a file which contains the metadata to be returned with
-# any location associated with this store.  The file must contain a
-# valid JSON object. The object should contain the keys 'id' and
-# 'mountpoint'. The value for both keys should be 'string'. (string
-# value)
-#filesystem_store_metadata_file = <None>
-
-# The required permission for created image file. In this way the user
-# other service used, e.g. Nova, who consumes the image could be the
-# exclusive member of the group that owns the files created. Assigning
-# it less then or equal to zero means don't change the default
-# permission of the file. This value will be decoded as an octal
-# digit. (integer value)
-#filesystem_store_file_perm = 0
+# Database to use (string value)
+#mongodb_store_db = <None>
 
 # Images will be chunked into objects of this size (in megabytes). For
 # best performance, this should be a power of two. (integer value)
@@ -398,3 +365,40 @@
 
 # IP address of sheep daemon. (string value)
 #sheepdog_store_address = localhost
+
+# The host where the S3 server is listening. (string value)
+#s3_store_host = <None>
+
+# The S3 query token access key. (string value)
+#s3_store_access_key = <None>
+
+# The S3 query token secret key. (string value)
+#s3_store_secret_key = <None>
+
+# The S3 bucket to be used to store the Glance data. (string value)
+#s3_store_bucket = <None>
+
+# The local directory where uploads will be staged before they are
+# transferred into S3. (string value)
+#s3_store_object_buffer_dir = <None>
+
+# A boolean to determine if the S3 bucket should be created on upload
+# if it does not exist or if an error should be returned to the user.
+# (boolean value)
+#s3_store_create_bucket_on_put = false
+
+# The S3 calling format used to determine the bucket. Either subdomain
+# or path can be used. (string value)
+#s3_store_bucket_url_format = subdomain
+
+# What size, in MB, should S3 start chunking image files and do a
+# multipart upload in S3. (integer value)
+#s3_store_large_object_size = 100
+
+# What multipart upload part size, in MB, should S3 use when uploading
+# parts. The size must be greater than or equal to 5M. (integer value)
+#s3_store_large_object_chunk_size = 10
+
+# The number of thread pools to perform a multipart upload in S3.
+# (integer value)
+#s3_store_thread_pools = 10

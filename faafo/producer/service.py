@@ -98,12 +98,12 @@ class ProducerService(service.Service, periodic_task.PeriodicTasks):
                 # NOTE(berendt): only necessary when using requests < 2.4.2
                 headers = {'Content-type': 'application/json',
                            'Accept': 'text/plain'}
-                requests.post("%s/api/fractal" % CONF.endpoint_url,
+                requests.post("%s/v1/fractal" % CONF.endpoint_url,
                               json.dumps(task), headers=headers)
                 LOG.info("generated task: %s" % task)
                 result = self._client.call(ctxt, 'process', task=task)
                 LOG.info("task %s processed: %s" % (task['uuid'], result))
-                requests.put("%s/api/fractal/%s" %
+                requests.put("%s/v1/fractal/%s" %
                              (CONF.endpoint_url, str(task['uuid'])),
                              json.dumps(result), headers=headers)
 
