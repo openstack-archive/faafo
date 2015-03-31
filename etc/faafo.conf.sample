@@ -1,6 +1,19 @@
 [DEFAULT]
 
 #
+# From faafo.api
+#
+
+# Listen address. (string value)
+#listen_address = 0.0.0.0
+
+# Bind port. (integer value)
+#bind_port = 5000
+
+# Database connection URL. (string value)
+#database_url = sqlite:////tmp/sqlite.db
+
+#
 # From faafo.producer
 #
 
@@ -240,12 +253,51 @@
 # From glance.store
 #
 
+# The host where the S3 server is listening. (string value)
+#s3_store_host = <None>
+
+# The S3 query token access key. (string value)
+#s3_store_access_key = <None>
+
+# The S3 query token secret key. (string value)
+#s3_store_secret_key = <None>
+
+# The S3 bucket to be used to store the Glance data. (string value)
+#s3_store_bucket = <None>
+
+# The local directory where uploads will be staged before they are
+# transferred into S3. (string value)
+#s3_store_object_buffer_dir = <None>
+
+# A boolean to determine if the S3 bucket should be created on upload
+# if it does not exist or if an error should be returned to the user.
+# (boolean value)
+#s3_store_create_bucket_on_put = false
+
+# The S3 calling format used to determine the bucket. Either subdomain
+# or path can be used. (string value)
+#s3_store_bucket_url_format = subdomain
+
+# What size, in MB, should S3 start chunking image files and do a
+# multipart upload in S3. (integer value)
+#s3_store_large_object_size = 100
+
+# What multipart upload part size, in MB, should S3 use when uploading
+# parts. The size must be greater than or equal to 5M. (integer value)
+#s3_store_large_object_chunk_size = 10
+
+# The number of thread pools to perform a multipart upload in S3.
+# (integer value)
+#s3_store_thread_pools = 10
+
 # Directory to which the Filesystem backend store writes images.
 # (string value)
+# Deprecated group/name - [DEFAULT]/filesystem_store_datadir
 #filesystem_store_datadir = <None>
 
 # List of directories and its priorities to which the Filesystem
 # backend store writes images. (multi valued)
+# Deprecated group/name - [DEFAULT]/filesystem_store_datadirs
 #filesystem_store_datadirs =
 
 # The path to a file which contains the metadata to be returned with
@@ -253,6 +305,7 @@
 # valid JSON object. The object should contain the keys 'id' and
 # 'mountpoint'. The value for both keys should be 'string'. (string
 # value)
+# Deprecated group/name - [DEFAULT]/filesystem_store_metadata_file
 #filesystem_store_metadata_file = <None>
 
 # The required permission for created image file. In this way the user
@@ -261,29 +314,82 @@
 # it less then or equal to zero means don't change the default
 # permission of the file. This value will be decoded as an octal
 # digit. (integer value)
+# Deprecated group/name - [DEFAULT]/filesystem_store_file_perm
 #filesystem_store_file_perm = 0
 
-# Info to match when looking for cinder in the service catalog. Format
-# is : separated values of the form:
-# <service_type>:<service_name>:<endpoint_type> (string value)
-#cinder_catalog_info = volume:cinder:publicURL
+# ESX/ESXi or vCenter Server target system. The server value can be an
+# IP address or a DNS name. (string value)
+#vmware_server_host = <None>
 
-# Override service catalog lookup with template for cinder endpoint
-# e.g. http://localhost:8776/v1/%(project_id)s (string value)
-#cinder_endpoint_template = <None>
+# Username for authenticating with VMware ESX/VC server. (string
+# value)
+#vmware_server_username = <None>
 
-# Region name of this node (string value)
-#os_region_name = <None>
+# Password for authenticating with VMware ESX/VC server. (string
+# value)
+#vmware_server_password = <None>
 
-# Location of ca certicates file to use for cinder client requests.
-# (string value)
-#cinder_ca_certificates_file = <None>
+# DEPRECATED. Inventory path to a datacenter. If the
+# vmware_server_host specified is an ESX/ESXi, the
+# vmware_datacenter_path is optional. If specified, it should be "ha-
+# datacenter". This option is deprecated in favor of vmware_datastores
+# and will be removed in the Liberty release. (string value)
+#vmware_datacenter_path = ha-datacenter
 
-# Number of cinderclient retries on failed http calls (integer value)
-#cinder_http_retries = 3
+# DEPRECATED. Datastore associated with the datacenter. This option is
+# deprecated in favor of vmware_datastores and will be removed in the
+# Liberty release. (string value)
+#vmware_datastore_name = <None>
 
-# Allow to perform insecure SSL requests to cinder (boolean value)
-#cinder_api_insecure = false
+# Number of times VMware ESX/VC server API must be retried upon
+# connection related issues. (integer value)
+#vmware_api_retry_count = 10
+
+# The interval used for polling remote tasks invoked on VMware ESX/VC
+# server. (integer value)
+#vmware_task_poll_interval = 5
+
+# The name of the directory where the glance images will be stored in
+# the VMware datastore. (string value)
+#vmware_store_image_dir = /openstack_glance
+
+# Allow to perform insecure SSL requests to ESX/VC. (boolean value)
+#vmware_api_insecure = false
+
+# A list of datastores where the image can be stored. This option may
+# be specified multiple times for specifying multiple datastores.
+# Either one of vmware_datastore_name or vmware_datastores is
+# required. The datastore name should be specified after its
+# datacenter path, seperated by ":". An optional weight may be given
+# after the datastore name, seperated again by ":". Thus, the required
+# format becomes <datacenter_path>:<datastore_name>:<optional_weight>.
+# When adding an image, the datastore with highest weight will be
+# selected, unless there is not enough free space available in cases
+# where the image size is already known. If no weight is given, it is
+# assumed to be zero and the directory will be considered for
+# selection last. If multiple datastores have the same weight, then
+# the one with the most free space available is selected. (multi
+# valued)
+#vmware_datastores =
+
+# Images will be chunked into objects of this size (in megabytes). For
+# best performance, this should be a power of two. (integer value)
+#sheepdog_store_chunk_size = 64
+
+# Port of sheep daemon. (integer value)
+#sheepdog_store_port = 7000
+
+# IP address of sheep daemon. (string value)
+#sheepdog_store_address = localhost
+
+# Hostname or IP address of the instance to connect to, or a mongodb
+# URI, or a list of hostnames / mongodb URIs. If host is an IPv6
+# literal it must be enclosed in '[' and ']' characters following the
+# RFC2732 URL syntax (e.g. '[::1]' for localhost) (string value)
+#mongodb_store_uri = <None>
+
+# Database to use (string value)
+#mongodb_store_db = <None>
 
 # Version of the authentication service to use. Valid versions are 2
 # for keystone and 1 for swauth and rackspace. (deprecated) (string
@@ -383,60 +489,27 @@
 # The config file that has the swift account(s)configs. (string value)
 #swift_store_config_file = <None>
 
-# ESX/ESXi or vCenter Server target system. The server value can be an
-# IP address or a DNS name. (string value)
-#vmware_server_host = <None>
+# Info to match when looking for cinder in the service catalog. Format
+# is : separated values of the form:
+# <service_type>:<service_name>:<endpoint_type> (string value)
+#cinder_catalog_info = volume:cinder:publicURL
 
-# Username for authenticating with VMware ESX/VC server. (string
-# value)
-#vmware_server_username = <None>
+# Override service catalog lookup with template for cinder endpoint
+# e.g. http://localhost:8776/v1/%(project_id)s (string value)
+#cinder_endpoint_template = <None>
 
-# Password for authenticating with VMware ESX/VC server. (string
-# value)
-#vmware_server_password = <None>
+# Region name of this node (string value)
+#os_region_name = <None>
 
-# DEPRECATED. Inventory path to a datacenter. If the
-# vmware_server_host specified is an ESX/ESXi, the
-# vmware_datacenter_path is optional. If specified, it should be "ha-
-# datacenter". This option is deprecated in favor of vmware_datastores
-# and will be removed in the Liberty release. (string value)
-#vmware_datacenter_path = ha-datacenter
+# Location of ca certicates file to use for cinder client requests.
+# (string value)
+#cinder_ca_certificates_file = <None>
 
-# DEPRECATED. Datastore associated with the datacenter. This option is
-# deprecated in favor of vmware_datastores and will be removed in the
-# Liberty release. (string value)
-#vmware_datastore_name = <None>
+# Number of cinderclient retries on failed http calls (integer value)
+#cinder_http_retries = 3
 
-# Number of times VMware ESX/VC server API must be retried upon
-# connection related issues. (integer value)
-#vmware_api_retry_count = 10
-
-# The interval used for polling remote tasks invoked on VMware ESX/VC
-# server. (integer value)
-#vmware_task_poll_interval = 5
-
-# The name of the directory where the glance images will be stored in
-# the VMware datastore. (string value)
-#vmware_store_image_dir = /openstack_glance
-
-# Allow to perform insecure SSL requests to ESX/VC. (boolean value)
-#vmware_api_insecure = false
-
-# A list of datastores where the image can be stored. This option may
-# be specified multiple times for specifying multiple datastores.
-# Either one of vmware_datastore_name or vmware_datastores is
-# required. The datastore name should be specified after its
-# datacenter path, seperated by ":". An optional weight may be given
-# after the datastore name, seperated again by ":". Thus, the required
-# format becomes <datacenter_path>:<datastore_name>:<optional_weight>.
-# When adding an image, the datastore with highest weight will be
-# selected, unless there is not enough free space available in cases
-# where the image size is already known. If no weight is given, it is
-# assumed to be zero and the directory will be considered for
-# selection last. If multiple datastores have the same weight, then
-# the one with the most free space available is selected. (multi
-# valued)
-#vmware_datastores =
+# Allow to perform insecure SSL requests to cinder (boolean value)
+#cinder_api_insecure = false
 
 # RADOS images will be chunked into objects of this size (in
 # megabytes). For best performance, this should be a power of two.
@@ -456,62 +529,6 @@
 # include a reference to the right keyring in a client.<USER> section
 # (string value)
 #rbd_store_ceph_conf = /etc/ceph/ceph.conf
-
-# Hostname or IP address of the instance to connect to, or a mongodb
-# URI, or a list of hostnames / mongodb URIs. If host is an IPv6
-# literal it must be enclosed in '[' and ']' characters following the
-# RFC2732 URL syntax (e.g. '[::1]' for localhost) (string value)
-#mongodb_store_uri = <None>
-
-# Database to use (string value)
-#mongodb_store_db = <None>
-
-# Images will be chunked into objects of this size (in megabytes). For
-# best performance, this should be a power of two. (integer value)
-#sheepdog_store_chunk_size = 64
-
-# Port of sheep daemon. (integer value)
-#sheepdog_store_port = 7000
-
-# IP address of sheep daemon. (string value)
-#sheepdog_store_address = localhost
-
-# The host where the S3 server is listening. (string value)
-#s3_store_host = <None>
-
-# The S3 query token access key. (string value)
-#s3_store_access_key = <None>
-
-# The S3 query token secret key. (string value)
-#s3_store_secret_key = <None>
-
-# The S3 bucket to be used to store the Glance data. (string value)
-#s3_store_bucket = <None>
-
-# The local directory where uploads will be staged before they are
-# transferred into S3. (string value)
-#s3_store_object_buffer_dir = <None>
-
-# A boolean to determine if the S3 bucket should be created on upload
-# if it does not exist or if an error should be returned to the user.
-# (boolean value)
-#s3_store_create_bucket_on_put = false
-
-# The S3 calling format used to determine the bucket. Either subdomain
-# or path can be used. (string value)
-#s3_store_bucket_url_format = subdomain
-
-# What size, in MB, should S3 start chunking image files and do a
-# multipart upload in S3. (integer value)
-#s3_store_large_object_size = 100
-
-# What multipart upload part size, in MB, should S3 use when uploading
-# parts. The size must be greater than or equal to 5M. (integer value)
-#s3_store_large_object_chunk_size = 10
-
-# The number of thread pools to perform a multipart upload in S3.
-# (integer value)
-#s3_store_thread_pools = 10
 
 
 [matchmaker_redis]

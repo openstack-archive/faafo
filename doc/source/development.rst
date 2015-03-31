@@ -30,9 +30,9 @@ Now it is possible to login with SSH.
 Open a new screen or tmux session. Aftwards run the api, worker, and producer
 services in the foreground, each service in a separate window.
 
-* :code:`sh run_api.sh`
-* :code:`sh run_producer.sh`
-* :code:`sh run_worker.sh`
+* :code:`faafo-api`
+* :code:`faafo-worker`
+* :code:`faafo-producer`
 
 RabbitMQ server
 ~~~~~~~~~~~~~~~
