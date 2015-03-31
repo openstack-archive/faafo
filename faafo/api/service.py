@@ -45,6 +45,7 @@ log.register_options(CONF)
 log.set_defaults()
 
 CONF(project='api', prog='faafo-api',
+     default_config_files='/etc/faafo/faafo.conf',
      version=version.version_info.version_string())
 
 log.setup(CONF, 'api',
