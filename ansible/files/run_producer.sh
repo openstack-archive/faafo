@@ -1,3 +1,3 @@
 #!/bin/sh
 
-faafo-producer --config-file producer.conf
+faafo-producer --config-file faafo.conf

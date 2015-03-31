@@ -1,3 +1,3 @@
 #!/bin/sh
 
-faafo-api --config-file api.conf
+faafo-api --config-file faafo.conf 
