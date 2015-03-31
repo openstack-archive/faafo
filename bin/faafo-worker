@@ -37,6 +37,7 @@ if __name__ == '__main__':
     log.set_defaults()
 
     CONF(project='worker', prog='faafo-worker',
+         default_config_files=['/etc/faafo/faafo.conf'],
          version=version.version_info.version_string())
 
     log.setup(CONF, 'worker',
