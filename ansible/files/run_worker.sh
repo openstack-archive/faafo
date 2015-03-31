@@ -1,3 +1,3 @@
 #!/bin/sh
 
-faafo-worker --config-file worker.conf
+faafo-worker --config-file faafo.conf
