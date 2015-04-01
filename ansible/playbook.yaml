@@ -3,19 +3,4 @@
 
   tasks:
   - apt: update-cache=yes upgrade=yes
-
-  - include: tasks/database.yaml
-  - include: tasks/messaging.yaml
-  - include: tasks/webinterface.yaml
-
-  - apt: name={{ item }} state=latest
-    with_items:
-      - git
-      - libmysqlclient-dev
-      - python-dev
-      - python-virtualenv
-
-  - command: pip install -r /vagrant/requirements.txt
-  - command: python setup.py install
-    args:
-      chdir: /vagrant
+  - command: /vagrant/contrib/install.sh messaging api worker
