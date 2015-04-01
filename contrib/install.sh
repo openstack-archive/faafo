@@ -13,18 +13,49 @@
 # under the License.
 
 if [[ -e /etc/os-release ]]; then
+
+    # install faafo from PyPi
+
+    # NOTE(berendt): support for centos/fedora/opensuse/sles will be added in the future
+
     source /etc/os-release
-    if [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
-        sudo yum install -y python-devel python-pip
-    elif [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+    if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
         sudo apt-get update
-        sudo apt-get install -y python-dev python-pip
-    elif [[ $ID = 'opensuse' || $ID = 'sles' ]]; then
-        sudo zypper install -y python-devel python-pip
+        sudo apt-get install -y python-dev python-pip supervisor
+    #elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
+    #    sudo yum install -y python-devel python-pip
+    #elif [[ $ID = 'opensuse' || $ID = 'sles' ]]; then
+    #    sudo zypper install -y python-devel python-pip
     else
+        echo "error: distribution $ID not supported"
         exit 1
     fi
+
     sudo pip install faafo
+    
+    if [[ $(echo $* | grep messaging) ]]; then
+        if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+            sudo apt-get install -y rabbitmq-server
+        fi
+    fi
+
+    if [[ $(echo $* | grep api ) ]]; then
+        echo "
+[program:faafo_api]
+command=$(which faafo-api)
+priority=10" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
+    fi
+
+    if [[ $(echo $* | grep worker ) ]]; then
+        echo "
+[program:faafo_worker]
+command=$(which faafo-worker)
+priority=20" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
+    fi
+
+
+    sudo supervisorctl reload
+
 else
     exit 1
 fi
