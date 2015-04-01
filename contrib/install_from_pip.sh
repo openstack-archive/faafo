@@ -21,7 +21,7 @@ if [[ -e /etc/os-release ]]; then
     source /etc/os-release
     if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
         sudo apt-get update
-        sudo apt-get install -y python-dev python-pip supervisor git
+        sudo apt-get install -y python-dev python-pip supervisor
     #elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
     #    sudo yum install -y python-devel python-pip
     #elif [[ $ID = 'opensuse' || $ID = 'sles' ]]; then
@@ -31,10 +31,7 @@ if [[ -e /etc/os-release ]]; then
         exit 1
     fi
 
-    git clone https://git.openstack.org/stackforge/faafo
-    cd faafo
-    sudo pip install -r requirements.txt
-    sudo pyton setup.py install
+    sudo pip install faafo
 
     if [[ $(echo $* | grep messaging) ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
