@@ -20,6 +20,7 @@ from flask_bootstrap import Bootstrap
 import glance_store
 from oslo_config import cfg
 from oslo_log import log
+import oslo_messaging as messaging
 
 from faafo import version
 
@@ -88,6 +89,10 @@ class Fractal(db.Model):
 db.create_all()
 manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 
+transport = messaging.get_transport(CONF)
+target = messaging.Target(topic='tasks')
+client = messaging.RPCClient(transport, target)
+
 
 @app.route('/', methods=['GET'])
 @app.route('/index', methods=['GET'])
@@ -114,8 +119,13 @@ def get_fractal(fractalid):
     return response
 
 
+def generate_fractal(**kwargs):
+    client.cast({}, 'process', task=kwargs['result'])
+
+
 def main():
     manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'],
+                       postprocessors={'POST': [generate_fractal]},
                        url_prefix='/v1')
     app.run(host=CONF.listen_address, port=CONF.bind_port)
 

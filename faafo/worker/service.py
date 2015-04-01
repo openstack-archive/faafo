@@ -17,7 +17,9 @@
 import eventlet
 eventlet.monkey_patch()
 
+import copy
 import hashlib
+import json
 import os
 from PIL import Image
 import random
@@ -29,11 +31,26 @@ import glance_store
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging as messaging
+import requests
 
 
 LOG = log.getLogger('faafo.worker')
 CONF = cfg.CONF
 glance_store.register_opts(CONF)
+
+
+worker_opts = {
+    cfg.StrOpt('endpoint-url',
+               default='http://localhost:5000',
+               help='API connection URL')
+}
+
+CONF.register_opts(worker_opts)
+
+
+def list_opts():
+    """Entry point for oslo-config-generator."""
+    return [(None, copy.deepcopy(worker_opts))]
 
 
 class JuliaSet(object):
@@ -120,6 +137,14 @@ class WorkerEndpoint(object):
             'url': glance[0],
             'size': glance[1]
         }
+
+        # NOTE(berendt): only necessary when using requests < 2.4.2
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'text/plain'}
+
+        requests.put("%s/v1/fractal/%s" %
+                     (CONF.endpoint_url, str(task['uuid'])),
+                     json.dumps(result), headers=headers)
 
         return result
 
