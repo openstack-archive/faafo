@@ -59,11 +59,10 @@ the application itself.
     $ pip install -r requirements.txt
     $ python setup.py install
 
-Open a new screen or tmux session. Aftwards run the api, worker, and producer
+Open a new screen or tmux session. Aftwards run the api and worker
 services in the foreground, each service in a separate window.
 
 .. code::
 
     $ source .venv/bin/activate; faafo-api
     $ source .venv/bin/activate; faafo-worker
-    $ source .venv/bin/activate; faafo-producer
