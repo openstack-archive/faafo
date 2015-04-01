@@ -34,7 +34,7 @@ if [[ -e /etc/os-release ]]; then
     git clone https://git.openstack.org/stackforge/faafo
     cd faafo
     sudo pip install -r requirements.txt
-    sudo pyton setup.py install
+    sudo python setup.py install
 
     if [[ $(echo $* | grep messaging) ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
