@@ -3,4 +3,4 @@
 
   tasks:
   - apt: update-cache=yes upgrade=yes
-  - command: /vagrant/contrib/install.sh messaging api worker
+  - command: /vagrant/contrib/install.sh -i faafo -i messaging -r api -r worker -r demo
