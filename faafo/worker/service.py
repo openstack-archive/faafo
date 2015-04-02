@@ -127,7 +127,7 @@ class WorkerEndpoint(object):
             image = base64.b64encode(fp.read())
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
         os.remove(filename)
-        LOG.debug("removed temporary file %s" % task['uuid'], filename)
+        LOG.debug("removed temporary file %s" % filename)
 
         result = {
             'uuid': task['uuid'],

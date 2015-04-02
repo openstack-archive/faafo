@@ -129,6 +129,7 @@ def generate_fractal(**kwargs):
 def main():
     manager.create_api(Fractal, methods=['GET', 'POST', 'DELETE', 'PUT'],
                        postprocessors={'POST': [generate_fractal]},
+                       exclude_columns=['image'],
                        url_prefix='/v1')
     app.run(host=CONF.listen_address, port=CONF.bind_port)
 

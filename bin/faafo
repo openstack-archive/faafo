@@ -117,7 +117,32 @@ def do_show_fractal():
 
 
 def do_list_fractals():
-    LOG.error("command 'list' not yet implemented")
+    LOG.info("listing all fractals")
+
+    fractals = get_fractals()
+    output = PrettyTable(["UUID", "Dimensions", "Filesize"])
+    for fractal in fractals:
+        output.add_row([
+            fractal["uuid"],
+            "%d x %d pixels" % (fractal["width"], fractal["height"]),
+            "%d bytes" % (fractal["size"] or 0),
+        ])
+    print(output)
+
+
+def get_fractals(page=1):
+    result = requests.get("%s/v1/fractal?page=%d" %
+                          (CONF.endpoint_url, page))
+
+    fractals = []
+    if result.status_code == 200:
+        data = json.loads(result.text)
+        if page < data['total_pages']:
+            fractals = data['objects'] + get_fractals(page + 1)
+        else:
+            return data['objects']
+
+    return fractals
 
 
 def do_delete_fractal():
