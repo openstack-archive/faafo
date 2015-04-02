@@ -24,8 +24,8 @@ if [[ -e /etc/os-release ]]; then
     RUN_API=0
     URL_DATABASE='sqlite:////tmp/sqlite.db'
     URL_MESSAGING='rabbit://guest:guest@localhost:5672/'
-    URL_API='http://127.0.0.1'
-    while getopts amdi:r: FLAG; do
+    URL_ENDPOINT='http://127.0.0.1'
+    while getopts e:m:d:i:r: FLAG; do
         case $FLAG in
             i)
                 case $OPTARG in
@@ -50,8 +50,8 @@ if [[ -e /etc/os-release ]]; then
                     ;;
                 esac
             ;;
-            a)
-                URL_API=$OPTARG
+            e)
+                URL_ENDPOINT=$OPTARG
             ;;
 
             m)
@@ -98,7 +98,7 @@ if [[ -e /etc/os-release ]]; then
 
         sudo sed -i -e "s#transport_url = .*#transport_url = $URL_MESSAGING#" /etc/faafo/faafo.conf
         sudo sed -i -e "s#database_url = .*#database_url = $URL_DATABASE#" /etc/faafo/faafo.conf
-        sudo sed -i -e "s#endpoint_url = .*#endpoint_url = $URL_API#" /etc/faafo/faafo.conf
+        sudo sed -i -e "s#endpoint_url = .*#endpoint_url = $URL_ENDPOINT#" /etc/faafo/faafo.conf
     fi
 
 
@@ -120,7 +120,7 @@ priority=20" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
 
     if [[ $RUN_DEMO -eq 1 && $RUN_API -eq 1 ]]; then
         for i in $(seq 1 10); do
-            faafo --endpoint-url $URL_API --debug create
+            faafo --endpoint-url $URL_ENDPOINT --debug create
             sleep 1
         done
     fi
