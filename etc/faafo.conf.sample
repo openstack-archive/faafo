@@ -8,7 +8,7 @@
 #listen_address = 0.0.0.0
 
 # Bind port. (integer value)
-#bind_port = 5000
+#bind_port = 80
 
 # Database connection URL. (string value)
 #database_url = sqlite:////tmp/sqlite.db
@@ -18,7 +18,7 @@
 #
 
 # API connection URL (string value)
-#endpoint_url = http://localhost:5000
+#endpoint_url = http://localhost
 
 #
 # From oslo.log

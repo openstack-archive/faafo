@@ -24,7 +24,7 @@ if [[ -e /etc/os-release ]]; then
     RUN_API=0
     URL_DATABASE='sqlite:////tmp/sqlite.db'
     URL_MESSAGING='rabbit://guest:guest@localhost:5672/'
-    URL_API='http://127.0.0.1:5000'
+    URL_API='http://127.0.0.1'
     while getopts amdi:r: FLAG; do
         case $FLAG in
             i)

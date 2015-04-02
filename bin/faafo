@@ -168,7 +168,7 @@ CONF.register_cli_opts([client_commands])
 
 client_cli_opts = [
     cfg.StrOpt('endpoint-url',
-               default='http://localhost:5000',
+               default='http://localhost',
                help='API connection URL')
 ]
 

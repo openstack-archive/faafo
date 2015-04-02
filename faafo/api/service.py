@@ -33,7 +33,7 @@ api_opts = [
                default='0.0.0.0',
                help='Listen address.'),
     cfg.IntOpt('bind-port',
-               default='5000',
+               default='80',
                help='Bind port.'),
     cfg.StrOpt('database-url',
                default='sqlite:////tmp/sqlite.db',
