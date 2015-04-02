@@ -17,6 +17,7 @@
 import eventlet
 eventlet.monkey_patch()
 
+import base64
 import copy
 import hashlib
 import json
@@ -27,7 +28,6 @@ import socket
 import tempfile
 import time
 
-import glance_store
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging as messaging
@@ -36,7 +36,6 @@ import requests
 
 LOG = log.getLogger('faafo.worker')
 CONF = cfg.CONF
-glance_store.register_opts(CONF)
 
 
 worker_opts = {
@@ -123,19 +122,18 @@ class WorkerEndpoint(object):
         filename = juliaset.get_file()
         LOG.debug("saved result of task %s to temporary file %s" %
                   (task['uuid'], filename))
-        with open(filename, 'rb') as fp:
+        with open(filename, "rb") as fp:
             size = os.fstat(fp.fileno()).st_size
-            glance = glance_store.add_to_backend(CONF, task['uuid'], fp, size)
+            image = base64.b64encode(fp.read())
         checksum = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
-        LOG.debug("checksum for task %s: %s" % (task['uuid'], checksum))
         os.remove(filename)
 
         result = {
             'uuid': task['uuid'],
             'duration': elapsed_time,
+            'image': image,
             'checksum': checksum,
-            'url': glance[0],
-            'size': glance[1]
+            'size': size
         }
 
         # NOTE(berendt): only necessary when using requests < 2.4.2
@@ -157,8 +155,5 @@ def get_server():
     ]
     server = messaging.get_rpc_server(transport, target, endpoints,
                                       executor='eventlet')
-
-    glance_store.create_stores(CONF)
-    glance_store.verify_default_store()
 
     return server
