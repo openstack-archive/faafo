@@ -26,7 +26,7 @@ if [[ -e /etc/os-release ]]; then
     RUN_WORKER=0
     URL_DATABASE='sqlite:////tmp/sqlite.db'
     URL_ENDPOINT='http://127.0.0.1'
-    URL_MESSAGING='rabbit://guest:guest@localhost:5672/'
+    URL_MESSAGING='amqp://guest:guest@localhost:5672/'
 
     while getopts e:m:d:i:r: FLAG; do
         case $FLAG in

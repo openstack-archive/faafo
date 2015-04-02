@@ -14,8 +14,8 @@
 
 # based on http://code.activestate.com/recipes/577120-julia-fractals/
 
-import eventlet
-eventlet.monkey_patch()
+#import eventlet
+#eventlet.monkey_patch()
 
 import base64
 import copy
@@ -24,15 +24,15 @@ import json
 import os
 from PIL import Image
 import random
-import socket
 import tempfile
 import time
 
+from kombu.mixins import ConsumerMixin
 from oslo_config import cfg
 from oslo_log import log
-import oslo_messaging as messaging
 import requests
 
+from faafo import queues
 
 LOG = log.getLogger('faafo.worker')
 CONF = cfg.CONF
@@ -102,9 +102,17 @@ class JuliaSet(object):
         return (c, z)
 
 
-class WorkerEndpoint(object):
+class Worker(ConsumerMixin):
 
-    def process(self, ctxt, task):
+    def __init__(self, connection):
+        self.connection = connection
+
+    def get_consumers(self, Consumer, channel):
+        return [Consumer(queues=queues.task_queue,
+                         accept=['json'],
+                         callbacks=[self.process])]
+
+    def process(self, task, message):
         LOG.info("processing task %s" % task['uuid'])
         LOG.debug(task)
         start_time = time.time()
@@ -145,16 +153,5 @@ class WorkerEndpoint(object):
                      (CONF.endpoint_url, str(task['uuid'])),
                      json.dumps(result), headers=headers)
 
+        message.ack()
         return result
-
-
-def get_server():
-    transport = messaging.get_transport(CONF)
-    target = messaging.Target(topic='tasks', server=socket.gethostname())
-    endpoints = [
-        WorkerEndpoint()
-    ]
-    server = messaging.get_rpc_server(transport, target, endpoints,
-                                      executor='eventlet')
-
-    return server

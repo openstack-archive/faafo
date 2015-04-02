@@ -19,11 +19,13 @@ import flask
 import flask.ext.restless
 import flask.ext.sqlalchemy
 from flask_bootstrap import Bootstrap
+from kombu import Connection
+from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
-import oslo_messaging as messaging
 from PIL import Image
 
+from faafo import queues
 from faafo import version
 
 LOG = log.getLogger('faafo.api')
@@ -87,10 +89,7 @@ class Fractal(db.Model):
 
 db.create_all()
 manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
-
-transport = messaging.get_transport(CONF)
-target = messaging.Target(topic='tasks')
-client = messaging.RPCClient(transport, target)
+connection = Connection(CONF.transport_url)
 
 
 @app.route('/', methods=['GET'])
@@ -123,7 +122,12 @@ def get_fractal(fractalid):
 
 
 def generate_fractal(**kwargs):
-    client.cast({}, 'process', task=kwargs['result'])
+    with producers[connection].acquire(block=True) as producer:
+        producer.publish(kwargs['result'],
+                         serializer='json',
+                         exchange=queues.task_exchange,
+                         declare=[queues.task_exchange],
+                         routing_key='normal')
 
 
 def main():
@@ -132,6 +136,3 @@ def main():
                        exclude_columns=['image'],
                        url_prefix='/v1')
     app.run(host=CONF.listen_address, port=CONF.bind_port)
-
-if __name__ == '__main__':
-    main()
