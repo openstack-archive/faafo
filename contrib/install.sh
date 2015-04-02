@@ -120,7 +120,7 @@ priority=20" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
 
     if [[ $RUN_DEMO -eq 1 && $RUN_API -eq 1 ]]; then
         for i in $(seq 1 10); do
-            faafo --endpoint-url $URL_API --debug
+            faafo --endpoint-url $URL_API --debug create
             sleep 1
         done
     fi
