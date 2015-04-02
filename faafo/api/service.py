@@ -12,21 +12,21 @@
 
 import copy
 from pkg_resources import resource_filename
+import StringIO
 
 import flask
 import flask.ext.restless
 import flask.ext.sqlalchemy
 from flask_bootstrap import Bootstrap
-import glance_store
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging as messaging
+from PIL import Image
 
 from faafo import version
 
 LOG = log.getLogger('faafo.api')
 CONF = cfg.CONF
-glance_store.register_opts(CONF)
 
 api_opts = [
     cfg.StrOpt('listen-address',
@@ -59,9 +59,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = CONF.database_url
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
 Bootstrap(app)
 
-glance_store.create_stores(CONF)
-glance_store.verify_default_store()
-
 
 def list_opts():
     """Entry point for oslo-config-generator."""
@@ -81,6 +78,7 @@ class Fractal(db.Model):
     xb = db.Column(db.Float, nullable=False)
     ya = db.Column(db.Float, nullable=False)
     yb = db.Column(db.Float, nullable=False)
+    image = db.Column(db.Blob, nullable=True)
 
     def __repr__(self):
         return '<Fractal %s>' % self.uuid
@@ -112,8 +110,10 @@ def get_fractal(fractalid):
                                   'message': 'Fracal not found'})
         response.status_code = 404
     else:
-        image, imagesize = glance_store.get_from_backend(fractal.url)
-        response = flask.make_response(image.fp.read())
+        image = Image.open(StringIO.StringIO(fractal.image))
+        output = StringIO.StringIO()
+        image.save(output)
+        response = flask.make_response(output)
         response.content_type = "image/png"
 
     return response
