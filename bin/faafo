@@ -32,20 +32,47 @@ CONF = cfg.CONF
 def get_random_task():
     random.seed()
 
-    width = random.randint(int(CONF.command.min_width),
-                           int(CONF.command.max_width))
-    height = random.randint(int(CONF.command.min_height),
-                            int(CONF.command.max_height))
-    iterations = random.randint(int(CONF.command.min_iterations),
-                                int(CONF.command.max_iterations))
-    xa = random.uniform(float(CONF.command.min_xa),
-                        float(CONF.command.max_xa))
-    xb = random.uniform(float(CONF.command.min_xb),
-                        float(CONF.command.max_xb))
-    ya = random.uniform(float(CONF.command.min_ya),
-                        float(CONF.command.max_ya))
-    yb = random.uniform(float(CONF.command.min_yb),
-                        float(CONF.command.max_yb))
+    if CONF.command.width:
+        width = int(CONF.command.width)
+    else:
+        width = random.randint(int(CONF.command.min_width),
+                               int(CONF.command.max_width))
+
+    if CONF.command.height:
+        height = int(CONF.command.height)
+    else:
+        height = random.randint(int(CONF.command.min_height),
+                                int(CONF.command.max_height))
+
+    if CONF.command.iterations:
+        iterations = int(CONF.command.iterations)
+    else:
+        iterations = random.randint(int(CONF.command.min_iterations),
+                                    int(CONF.command.max_iterations))
+
+    if CONF.command.xa:
+        xa = float(CONF.command.xa)
+    else:
+        xa = random.uniform(float(CONF.command.min_xa),
+                            float(CONF.command.max_xa))
+
+    if CONF.command.xb:
+        xb = float(CONF.command.xb)
+    else:
+        xb = random.uniform(float(CONF.command.min_xb),
+                            float(CONF.command.max_xb))
+
+    if CONF.command.ya:
+        ya = float(CONF.command.ya)
+    else:
+        ya = random.uniform(float(CONF.command.min_ya),
+                            float(CONF.command.max_ya))
+
+    if CONF.command.yb:
+        yb = float(CONF.command.yb)
+    else:
+        yb = random.uniform(float(CONF.command.min_yb),
+                            float(CONF.command.max_yb))
 
     task = {
         'uuid': str(uuid.uuid4()),
@@ -102,7 +129,11 @@ def do_delete_fractal():
 
 def do_create_fractal():
     random.seed()
-    number = random.randint(CONF.command.min_tasks, CONF.command.max_tasks)
+    if CONF.command.tasks:
+        number = int(CONF.command.tasks)
+    else:
+        number = random.randint(int(CONF.command.min_tasks),
+                                int(CONF.command.max_tasks))
     LOG.info("generating %d task(s)" % number)
     for i in xrange(0, number):
         task = get_random_task()
@@ -117,38 +148,54 @@ def do_create_fractal():
 def add_command_parsers(subparsers):
     parser = subparsers.add_parser('create')
     parser.set_defaults(func=do_create_fractal)
-    parser.add_argument("--max-height", default=1024,
-                        help="The maximum height of the generate image.")
-    parser.add_argument("--max-width", default=1024,
-                        help="The maximum width of the generated image.")
-    parser.add_argument("--max-xa", default=-4.0,
-                        help="The maximum value for the parameter 'xa'.")
-    parser.add_argument("--max-xb", default=4.0,
-                        help="The maximum value for the parameter 'xb'.")
-    parser.add_argument("--max-ya", default=-3,
-                        help="The maximum value for the parameter 'ya'.")
-    parser.add_argument("--max-yb", default=3,
-                        help="The maximum value for the parameter 'yb'.")
-    parser.add_argument("--max-iterations", default=512,
-                        help="The maximum number of iterations.")
+    parser.add_argument("--height", default=None,
+                        help="The height of the generate image.")
     parser.add_argument("--min-height", default=256,
                         help="The minimum height of the generate image.")
+    parser.add_argument("--max-height", default=1024,
+                        help="The maximum height of the generate image.")
+    parser.add_argument("--width", default=None,
+                        help="The width of the generated image.")
     parser.add_argument("--min-width", default=256,
                         help="The minimum width of the generated image.")
-    parser.add_argument("--min-xa", default=-1.0,
-                        help="The minimum value for the parameter 'xa'.")
-    parser.add_argument("--min-xb", default=1.0,
-                        help="The minimum value for the parameter 'xb'.")
-    parser.add_argument("--min-ya", default=-0.5,
-                        help="The minimum value for the parameter 'ya'.")
-    parser.add_argument("--min-yb", default=0.5,
-                        help="The minimum value for the parameter 'yb'.")
+    parser.add_argument("--max-width", default=1024,
+                        help="The maximum width of the generated image.")
+    parser.add_argument("--iterations", default=None,
+                        help="The number of iterations.")
     parser.add_argument("--min-iterations", default=128,
                         help="The minimum number of iterations.")
+    parser.add_argument("--max-iterations", default=512,
+                        help="The maximum number of iterations.")
+    parser.add_argument("--tasks", default=None,
+                        help="The number of generated fractals.")
     parser.add_argument("--min-tasks", default=1,
-                        help="The minimum number of generated tasks.")
+                        help="The minimum number of generated fractals.")
     parser.add_argument("--max-tasks", default=10,
-                        help="The maximum number of generated tasks.")
+                        help="The maximum number of generated fractals.")
+    parser.add_argument("--xa", default=None,
+                        help="The value for the parameter 'xa'.")
+    parser.add_argument("--min-xa", default=-1.0,
+                        help="The minimum value for the parameter 'xa'.")
+    parser.add_argument("--max-xa", default=-4.0,
+                        help="The maximum value for the parameter 'xa'.")
+    parser.add_argument("--xb", default=None,
+                        help="The value for the parameter 'xb'.")
+    parser.add_argument("--min-xb", default=1.0,
+                        help="The minimum value for the parameter 'xb'.")
+    parser.add_argument("--max-xb", default=4.0,
+                        help="The maximum value for the parameter 'xb'.")
+    parser.add_argument("--ya", default=None,
+                        help="The value for the parameter 'ya'.")
+    parser.add_argument("--min-ya", default=-0.5,
+                        help="The minimum value for the parameter 'ya'.")
+    parser.add_argument("--max-ya", default=-3,
+                        help="The maximum value for the parameter 'ya'.")
+    parser.add_argument("--yb", default=None,
+                        help="The value for the parameter 'yb'.")
+    parser.add_argument("--min-yb", default=0.5,
+                        help="The minimum value for the parameter 'yb'.")
+    parser.add_argument("--max-yb", default=3,
+                        help="The maximum value for the parameter 'yb'.")
 
     parser = subparsers.add_parser('delete')
     parser.set_defaults(func=do_delete_fractal)
