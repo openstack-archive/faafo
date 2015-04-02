@@ -17,20 +17,26 @@ if [[ -e /etc/os-release ]]; then
     # NOTE(berendt): support for centos/rhel/fedora/opensuse/sles will be added in the future
 
     source /etc/os-release
-    RUN_DEMO=0
-    INSTALL_MESSAGING=0
+
+    INSTALL_DATABASE=0
     INSTALL_FAAFO=0
-    RUN_WORKER=0
+    INSTALL_MESSAGING=0
     RUN_API=0
+    RUN_DEMO=0
+    RUN_WORKER=0
     URL_DATABASE='sqlite:////tmp/sqlite.db'
-    URL_MESSAGING='rabbit://guest:guest@localhost:5672/'
     URL_ENDPOINT='http://127.0.0.1'
+    URL_MESSAGING='rabbit://guest:guest@localhost:5672/'
+
     while getopts e:m:d:i:r: FLAG; do
         case $FLAG in
             i)
                 case $OPTARG in
                     messaging)
                         INSTALL_MESSAGING=1
+                    ;;
+                    database)
+                        INSTALL_DATABASE=1
                     ;;
                     faafo)
                         INSTALL_FAAFO=1
@@ -68,6 +74,19 @@ if [[ -e /etc/os-release ]]; then
             ;;
         esac
     done
+
+    if [[ $INSTALL_DATABASE -eq 1 ]]; then
+        if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+            sudo mysqladmin password password
+            sudo mysql -uroot -ppassword mysql -e "CREATE DATABASE IF NOT EXISTS faafo; GRANT ALL PRIVILEGES ON faafo.* TO 'faafo'@'%' IDENTIFIED BY 'password';"
+            sudo sed -i -e "/bind-address/d" /etc/mysql/my.cnf
+            sudo /etc/init.d/mysql restart
+        else
+            echo "error: distribution $ID not supported"
+            exit 1
+        fi
+    fi
 
     if [[ $INSTALL_MESSAGING -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
