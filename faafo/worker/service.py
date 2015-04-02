@@ -41,7 +41,7 @@ glance_store.register_opts(CONF)
 
 worker_opts = {
     cfg.StrOpt('endpoint-url',
-               default='http://localhost:5000',
+               default='http://localhost',
                help='API connection URL')
 }
 

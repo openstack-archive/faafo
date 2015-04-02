@@ -15,7 +15,7 @@
 import json
 import requests
 
-url = 'http://127.0.0.1:5000/api/fractal'
+url = 'http://127.0.0.1/api/fractal'
 headers = {'Content-Type': 'application/json'}
 
 uuid = '13bf15a8-9f6c-4d59-956f-7d20f7484687'
