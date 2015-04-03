@@ -135,8 +135,10 @@ command=$(which faafo-worker)
 priority=20" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
     fi
 
-    sudo supervisorctl reload
-    sleep 5
+    if [[ $RUN_WORKER -eq 1 || $RUN_API -eq 1 ]]; then
+        sudo supervisorctl reload
+        sleep 5
+    fi
 
     if [[ $RUN_DEMO -eq 1 && $RUN_API -eq 1 ]]; then
         faafo --endpoint-url $URL_ENDPOINT --debug create
