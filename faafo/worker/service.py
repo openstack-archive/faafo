@@ -21,6 +21,7 @@ import json
 import os
 from PIL import Image
 import random
+import socket
 import tempfile
 import time
 
@@ -139,7 +140,8 @@ class Worker(ConsumerMixin):
             'duration': elapsed_time,
             'image': image,
             'checksum': checksum,
-            'size': size
+            'size': size,
+            'generated_by': socket.gethostname()
         }
 
         # NOTE(berendt): only necessary when using requests < 2.4.2

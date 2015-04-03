@@ -111,6 +111,7 @@ def do_show_fractal():
         output.add_row(["yb", data['yb']])
         output.add_row(["size", "%d bytes" % data['size']])
         output.add_row(["checksum", data['checksum']])
+        output.add_row(["generated_by", data['generated_by']])
         print(output)
     else:
         LOG.error("fractal '%s' not found" % CONF.command.uuid)

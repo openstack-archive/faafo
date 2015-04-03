@@ -82,6 +82,7 @@ class Fractal(db.Model):
     ya = db.Column(db.Float, nullable=False)
     yb = db.Column(db.Float, nullable=False)
     image = db.Column(db.LargeBinary, nullable=True)
+    generated_by = db.Column(db.String(256), nullable=True)
 
     def __repr__(self):
         return '<Fractal %s>' % self.uuid
