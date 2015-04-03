@@ -38,7 +38,7 @@ Vagrant.configure(2) do |config|
     node.vm.hostname= "api"
     node.vm.network :private_network, ip: '10.0.88.20'
     config.vm.provision "shell",
-      inline: "/vagrant/contrib/install.sh -i faafo -d 'mysql://faafo:password@%10.0.88.10:3306/faafo' -m 'amqp://guest:guest@10.0.88.10:5672/'"
+      inline: "/vagrant/contrib/install.sh -i faafo -r api -d 'mysql://faafo:password@%10.0.88.10:3306/faafo' -m 'amqp://guest:guest@10.0.88.10:5672/'"
     node.vm.network 'forwarded_port', guest: 80, host: 1080
   end
 
@@ -46,7 +46,7 @@ Vagrant.configure(2) do |config|
     node.vm.hostname= "worker"
     node.vm.network :private_network, ip: '10.0.88.30'
     config.vm.provision "shell",
-      inline: "/vagrant/contrib/install.sh -i faafo -r api -r worker -r demo -d 'mysql://faafo:password@%10.0.88.10:3306/faafo' -m 'amqp://guest:guest@10.0.88.10:5672/' -e 'http://10.0.88.20'"
+      inline: "/vagrant/contrib/install.sh -i faafo -r worker -m 'amqp://guest:guest@10.0.88.10:5672/' -e 'http://10.0.88.20'"
   end
 
 end
