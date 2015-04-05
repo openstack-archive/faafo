@@ -21,10 +21,8 @@ Vagrant.configure(2) do |config|
   end
   config.ssh.shell = 'bash -c "BASH_ENV=/etc/profile exec bash"'
   config.cache.scope = :box if Vagrant.has_plugin?('vagrant-cachier')
-  config.vm.hostname = 'faafo'
-  config.vm.provision 'ansible' do |ansible|
-    ansible.playbook = 'ansible/playbook.yaml'
-  end
+  config.vm.provision "shell",
+    inline: "apt-get update && apt-get upgrade -y"
 
   config.vm.define "services", primary: true do |node|
     node.vm.hostname= "services"

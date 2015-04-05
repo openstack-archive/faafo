@@ -1,5 +1,0 @@
-- hosts: all
-  sudo: True
-
-  tasks:
-  - apt: update-cache=yes upgrade=yes
