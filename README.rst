@@ -15,4 +15,5 @@ Contributors are encouraged to join IRC (``#openstackfirstapp`` on freenode):
 
     https://wiki.openstack.org/wiki/IRC
 
-For information on contributing to Keystone, see ``CONTRIBUTING.rst``.
+For information on contributing to the First App Application for OpenStack,
+see ``CONTRIBUTING.rst``.
