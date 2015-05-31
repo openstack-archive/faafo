@@ -75,6 +75,10 @@ if [[ -e /etc/os-release ]]; then
         esac
     done
 
+    if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+        sudo apt-get update
+    fi
+
     if [[ $INSTALL_DATABASE -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
@@ -99,7 +103,6 @@ if [[ -e /etc/os-release ]]; then
 
     if [[ $INSTALL_FAAFO -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
-            sudo apt-get update
             sudo apt-get install -y python-dev python-pip supervisor git zlib1g-dev libmysqlclient-dev
         #elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
         #    sudo yum install -y python-devel python-pip
