@@ -14,7 +14,7 @@
 
 if [[ -e /etc/os-release ]]; then
 
-    # NOTE(berendt): support for centos/rhel/fedora/opensuse/sles will be added in the future
+    # NOTE(berendt): support for opensuse/sles will be added in the future
 
     source /etc/os-release
 
@@ -77,24 +77,35 @@ if [[ -e /etc/os-release ]]; then
 
     if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
         sudo apt-get update
+    elif [[ $ID = 'fedora' || $ID = 'centos' || $ID = 'rhel' ]]; then
+        sudo yum update -y
     fi
 
     if [[ $INSTALL_DATABASE -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
-            sudo mysqladmin password password
-            sudo mysql -uroot -ppassword mysql -e "CREATE DATABASE IF NOT EXISTS faafo; GRANT ALL PRIVILEGES ON faafo.* TO 'faafo'@'%' IDENTIFIED BY 'password';"
             sudo sed -i -e "/bind-address/d" /etc/mysql/my.cnf
             sudo /etc/init.d/mysql restart
+        elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
+            sudo yum install -y mariadb-server
+            sudo printf "[mysqld]\nbind-address = 127.0.0.1\n" >> /etc/my.cnf.d/faafo.conf
+            sudo systemctl enable mariadb
+            sudo systemctl start mariadb
         else
             echo "error: distribution $ID not supported"
             exit 1
         fi
+        sudo mysqladmin password password
+        sudo mysql -uroot -ppassword mysql -e "CREATE DATABASE IF NOT EXISTS faafo; GRANT ALL PRIVILEGES ON faafo.* TO 'faafo'@'%' IDENTIFIED BY 'password';"
     fi
 
     if [[ $INSTALL_MESSAGING -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
             sudo apt-get install -y rabbitmq-server
+        elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
+            sudo yum install -y rabbitmq-server
+            sudo systemctl enable rabbitmq-server
+            sudo systemctl start rabbitmq-server
         else
             echo "error: distribution $ID not supported"
             exit 1
@@ -104,8 +115,10 @@ if [[ -e /etc/os-release ]]; then
     if [[ $INSTALL_FAAFO -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
             sudo apt-get install -y python-dev python-pip supervisor git zlib1g-dev libmysqlclient-dev
-        #elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
-        #    sudo yum install -y python-devel python-pip
+        elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
+            sudo yum install -y python-devel python-pip supervisor git zlib-devel mariadb-devel gcc which
+            sudo systemctl enable supervisord
+            sudo systemctl start supervisord
         #elif [[ $ID = 'opensuse' || $ID = 'sles' ]]; then
         #    sudo zypper install -y python-devel python-pip
         else
@@ -125,17 +138,35 @@ if [[ -e /etc/os-release ]]; then
 
 
     if [[ $RUN_API -eq 1 ]]; then
-        echo "
+        faafo_api="
 [program:faafo_api]
 command=$(which faafo-api)
-priority=10" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
+priority=10"
+
+        if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+            echo "$faafo_api" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
+        elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
+            echo "$faafo_api" | sudo tee -a /etc/supervisord.d/faafo.ini
+        else
+            echo "error: distribution $ID not supported"
+            exit 1
+        fi
     fi
 
     if [[ $RUN_WORKER -eq 1 ]]; then
-        echo "
+        faafo_worker="
 [program:faafo_worker]
 command=$(which faafo-worker)
-priority=20" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
+priority=20"
+
+        if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+            echo "$faafo_worker" | sudo tee -a /etc/supervisor/conf.d/faafo.conf
+        elif [[ $ID = 'centos' || $ID = 'fedora' || $ID = 'rhel' ]]; then
+            echo "$faafo_worker" | sudo tee -a /etc/supervisord.d/faafo.ini
+        else
+            echo "error: distribution $ID not supported"
+            exit 1
+        fi
     fi
 
     if [[ $RUN_WORKER -eq 1 || $RUN_API -eq 1 ]]; then
