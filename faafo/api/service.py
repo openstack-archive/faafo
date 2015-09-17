@@ -24,6 +24,7 @@ from kombu.pools import producers
 from oslo_config import cfg
 from oslo_log import log
 from PIL import Image
+from sqlalchemy.dialects.mysql import MEDIUMBLOB
 
 from faafo import queues
 from faafo import version
@@ -81,7 +82,12 @@ class Fractal(db.Model):
     xb = db.Column(db.Float, nullable=False)
     ya = db.Column(db.Float, nullable=False)
     yb = db.Column(db.Float, nullable=False)
-    image = db.Column(db.LargeBinary, nullable=True)
+    if CONF.database_url.startswith('sqlite'):
+        LOG.info('Using sqlite')
+        image = db.Column(db.LargeBinary, nullable=True)
+    else:
+        LOG.info('Using mysql')
+        image = db.Column(MEDIUMBLOB, nullable=True)
     generated_by = db.Column(db.String(256), nullable=True)
 
     def __repr__(self):
