@@ -76,12 +76,13 @@ if [[ -e /etc/os-release ]]; then
     done
 
     if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
+        export DEBIAN_FRONTEND=noninteractive
         sudo apt-get update
     fi
 
     if [[ $INSTALL_DATABASE -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+            sudo apt-get install -y mysql-server
             sudo mysqladmin password password
             sudo mysql -uroot -ppassword mysql -e "CREATE DATABASE IF NOT EXISTS faafo; GRANT ALL PRIVILEGES ON faafo.* TO 'faafo'@'%' IDENTIFIED BY 'password';"
             sudo sed -i -e "/bind-address/d" /etc/mysql/my.cnf
