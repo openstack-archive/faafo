@@ -1,15 +1,15 @@
-pbr>=0.6,!=0.7,<1.0
+pbr>=1.6
 anyjson>=0.3.3
-eventlet>=0.16.1,!=0.17.0
-MySQL-python
+eventlet>=0.17.4
+MySQL-python;python_version=='2.7'
 PyMySQL>=0.6.2  # MIT License
 Pillow==2.4.0 # MIT
-requests>=2.2.0,!=2.4.0
+requests>=2.5.2
 Flask-Bootstrap
 Flask>=0.10,<1.0
 flask-restless
 flask-sqlalchemy
-oslo.config>=1.9.3,<1.10.0  # Apache-2.0
-oslo.log>=1.0.0,<1.1.0  # Apache-2.0
+oslo.config>=2.3.0  # Apache-2.0
+oslo.log>=1.8.0  # Apache-2.0
 PrettyTable>=0.7,<0.8
-kombu>=2.5.0
+kombu>=3.0.7
