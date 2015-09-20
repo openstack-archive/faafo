@@ -16,8 +16,8 @@
 Vagrant.configure(2) do |config|
   config.vm.box = 'ubuntu/trusty64'
   config.vm.provider 'virtualbox' do |vb|
-    vb.customize ['modifyvm', :id, '--memory', '1024']
-    vb.customize ['modifyvm', :id, '--cpus', '1']
+    vb.memory = 1024
+    vb.cpus = 1
   end
   config.ssh.shell = 'bash -c "BASH_ENV=/etc/profile exec bash"'
   config.cache.scope = :box if Vagrant.has_plugin?('vagrant-cachier')
