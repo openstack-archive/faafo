@@ -1,7 +1,6 @@
 pbr>=1.6
 anyjson>=0.3.3
 eventlet>=0.17.4
-MySQL-python;python_version=='2.7'
 PyMySQL>=0.6.2  # MIT License
 Pillow==2.4.0 # MIT
 requests>=2.5.2
