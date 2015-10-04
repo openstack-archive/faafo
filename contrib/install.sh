@@ -83,11 +83,11 @@ if [[ -e /etc/os-release ]]; then
 
     if [[ $INSTALL_DATABASE -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server python-mysqldb
             sudo sed -i -e "/bind-address/d" /etc/mysql/my.cnf
-            sudo /etc/init.d/mysql restart
+            sudo service mysql restart
         elif [[ $ID = 'fedora' ]]; then
-            sudo dnf install -y mariadb-server
+            sudo dnf install -y mariadb-server python-mysql
             printf "[mysqld]\nbind-address = 127.0.0.1\n" | sudo tee /etc/my.cnf.d/faafo.conf
             sudo systemctl enable mariadb
             sudo systemctl start mariadb
@@ -97,6 +97,7 @@ if [[ -e /etc/os-release ]]; then
         fi
         sudo mysqladmin password password
         sudo mysql -uroot -ppassword mysql -e "CREATE DATABASE IF NOT EXISTS faafo; GRANT ALL PRIVILEGES ON faafo.* TO 'faafo'@'%' IDENTIFIED BY 'password';"
+        URL_DATABASE='mysql://root:password@localhost/faafo'
     fi
 
     if [[ $INSTALL_MESSAGING -eq 1 ]]; then
