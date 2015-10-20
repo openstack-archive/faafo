@@ -127,7 +127,7 @@ if [[ -e /etc/os-release ]]; then
             exit 1
         fi
 
-        git clone https://git.openstack.org/stackforge/faafo
+        git clone https://git.openstack.org/openstack/faafo
         cd faafo
         sudo pip install -r requirements.txt
         sudo python setup.py install
