@@ -5,7 +5,7 @@ First App Application for OpenStack (faafo)
 Developer documentation, the source of which is in ``doc/source/``, is
 published at:
 
-    http://first-app-application-for-openstack.readthedocs.org/en/latest/
+    http://docs.openstack.org/developer/faafo/
 
 Bugs and feature requests are tracked on Launchpad at:
 
