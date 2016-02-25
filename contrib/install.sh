@@ -97,7 +97,7 @@ if [[ -e /etc/os-release ]]; then
         fi
         sudo mysqladmin password password
         sudo mysql -uroot -ppassword mysql -e "CREATE DATABASE IF NOT EXISTS faafo; GRANT ALL PRIVILEGES ON faafo.* TO 'faafo'@'%' IDENTIFIED BY 'password';"
-        URL_DATABASE='mysql://root:password@localhost/faafo'
+        URL_DATABASE='mysql://faafo:password@localhost/faafo'
     fi
 
     if [[ $INSTALL_MESSAGING -eq 1 ]]; then
