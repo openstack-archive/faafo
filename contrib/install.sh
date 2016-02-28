@@ -115,9 +115,9 @@ if [[ -e /etc/os-release ]]; then
 
     if [[ $INSTALL_FAAFO -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
-            sudo apt-get install -y python-dev python-pip supervisor git zlib1g-dev libmysqlclient-dev
+            sudo apt-get install -y python-dev python-pip supervisor git zlib1g-dev libmysqlclient-dev python-mysqldb
         elif [[ $ID = 'fedora' ]]; then
-            sudo dnf install -y python-devel python-pip supervisor git zlib-devel mariadb-devel gcc which
+            sudo dnf install -y python-devel python-pip supervisor git zlib-devel mariadb-devel gcc which python-mysql
             sudo systemctl enable supervisord
             sudo systemctl start supervisord
         #elif [[ $ID = 'opensuse' || $ID = 'sles' ]]; then
