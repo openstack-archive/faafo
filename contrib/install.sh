@@ -116,6 +116,18 @@ if [[ -e /etc/os-release ]]; then
     if [[ $INSTALL_FAAFO -eq 1 ]]; then
         if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
             sudo apt-get install -y python-dev python-pip supervisor git zlib1g-dev libmysqlclient-dev python-mysqldb
+            # Following is needed because of
+            # https://bugs.launchpad.net/ubuntu/+source/supervisor/+bug/1594740
+            if [ $(lsb_release --short --codename) = xenial ]; then
+                # Make sure the daemon is enabled.
+                if ! systemctl --quiet is-enabled supervisor; then
+                    systemctl enable supervisor
+                fi
+                # Make sure the daemon is started.
+                if ! systemctl --quiet is-active supervisor; then
+                    systemctl start supervisor
+                fi
+            fi
         elif [[ $ID = 'fedora' ]]; then
             sudo dnf install -y python-devel python-pip supervisor git zlib-devel mariadb-devel gcc which python-mysql
             sudo systemctl enable supervisord
