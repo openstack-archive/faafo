@@ -1,0 +1,8 @@
+Code-Review+2: Tom Fifield <tom@openstack.org>
+Workflow+1: Tom Fifield <tom@openstack.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 26 Oct 2016 15:55:05 +0000
+Reviewed-on: https://review.openstack.org/390582
+Project: openstack/faafo
+Branch: refs/heads/master
