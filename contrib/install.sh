@@ -141,6 +141,8 @@ if [[ -e /etc/os-release ]]; then
 
         git clone https://git.openstack.org/openstack/faafo
         cd faafo
+        # following line required by bug 1636150
+        sudo pip install --upgrade pbr
         sudo pip install -r requirements.txt
         sudo python setup.py install
 
