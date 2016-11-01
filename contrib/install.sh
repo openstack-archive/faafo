@@ -74,6 +74,10 @@ if [[ -e /etc/os-release ]]; then
             ;;
         esac
     done
+    #set enviroment path for debain 8 clout-init
+	if [[ $ID = 'debian' ]]; then
+		export PATH=/usr/local/bin:$PATH
+	fi
 
     if [[ $ID = 'ubuntu' || $ID = 'debian' ]]; then
         sudo apt-get update
