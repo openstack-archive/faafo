@@ -1,0 +1,9 @@
+Code-Review+2: Tom Fifield <tom@openstack.org>
+Code-Review+2: Christian Berendt <berendt@betacloud-solutions.de>
+Workflow+1: Christian Berendt <berendt@betacloud-solutions.de>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Thu, 19 Jan 2017 11:12:36 +0000
+Reviewed-on: https://review.openstack.org/405187
+Project: openstack/faafo
+Branch: refs/heads/master
