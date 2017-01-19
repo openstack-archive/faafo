@@ -1,0 +1,10 @@
+Code-Review+1: venkatamahesh <Venkata.Kotha@infinite.com>
+Code-Review+1: Gerald Lonlas <glonlas@internap.com>
+Code-Review+2: Christian Berendt <berendt@betacloud-solutions.de>
+Workflow+1: Christian Berendt <berendt@betacloud-solutions.de>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Thu, 19 Jan 2017 11:12:42 +0000
+Reviewed-on: https://review.openstack.org/402608
+Project: openstack/faafo
+Branch: refs/heads/master
