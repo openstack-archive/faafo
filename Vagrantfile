@@ -46,5 +46,4 @@ Vagrant.configure(2) do |config|
     node.vm.provision "shell",
       inline: "/vagrant/contrib/install.sh -i faafo -r worker -m 'amqp://guest:guest@10.0.88.10:5672/' -e 'http://10.0.88.20'"
   end
-
 end
