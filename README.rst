@@ -1,28 +1,10 @@
-========================
-Team and repository tags
-========================
+This project is no longer maintained.
 
-.. image:: http://governance.openstack.org/badges/faafo.svg
-    :target: http://governance.openstack.org/reference/tags/index.html
+The contents of this repository are still available in the Git
+source code management system.  To see the contents of this
+repository before it reached its end of life, please check out the
+previous commit with "git checkout HEAD^1".
 
-.. Change things from this point on
-
-===========================================
-First App Application for OpenStack (faafo)
-===========================================
-
-Developer documentation, the source of which is in ``doc/source/``, is
-published at:
-
-    http://docs.openstack.org/developer/faafo/
-
-Bugs and feature requests are tracked on Launchpad at:
-
-    https://bugs.launchpad.net/faafo
-
-Contributors are encouraged to join IRC (``#openstackfirstapp`` on freenode):
-
-    https://wiki.openstack.org/wiki/IRC
-
-For information on contributing to the First App Application for OpenStack,
-see ``CONTRIBUTING.rst``.
+For any further questions, please email
+openstack-discuss@lists.openstack.org or join #openstack-dev on
+Freenode.
