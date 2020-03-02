@@ -1,0 +1,9 @@
+Code-Review+2: Christian Berendt <berendt@betacloud-solutions.de>
+Code-Review+2: Andreas Jaeger <jaegerandi@gmail.com>
+Workflow+1: Andreas Jaeger <jaegerandi@gmail.com>
+Verified+2: Zuul
+Submitted-by: Zuul
+Submitted-at: Mon, 02 Mar 2020 19:13:36 +0000
+Reviewed-on: https://review.opendev.org/710653
+Project: openstack/faafo
+Branch: refs/heads/master
